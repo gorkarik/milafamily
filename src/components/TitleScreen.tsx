@@ -1,15 +1,13 @@
-import { ArrowRight, Globe, Volume2, VolumeX } from 'lucide-react';
+import { ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'motion/react';
-import type { CharacterId, Lang } from '../types/game';
-import { LANG_OPTIONS, UI_TEXT } from '../data/i18n';
+import type { CharacterId } from '../types/game';
+import { UI_TEXT } from '../data/i18n';
 import { CharacterPortrait } from './CharacterPortrait';
 
 interface TitleScreenProps {
-  lang: Lang;
   muted: boolean;
   hasProgress: boolean;
   totalStars: number;
-  onChangeLang: (lang: Lang) => void;
   onToggleMute: () => void;
   onStart: () => void;
 }
@@ -22,15 +20,13 @@ const FAMILY_ORDER: { id: CharacterId; featured?: boolean }[] = [
 ];
 
 export function TitleScreen({
-  lang,
   muted,
   hasProgress,
   totalStars,
-  onChangeLang,
   onToggleMute,
   onStart,
 }: TitleScreenProps) {
-  const ui = UI_TEXT[lang];
+  const ui = UI_TEXT;
 
   return (
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-gradient-to-b from-[#2A1E17] via-[#1C1410] to-[#120D0A] text-[#FAF5EB]">
@@ -41,27 +37,7 @@ export function TitleScreen({
       />
 
       {/* Minimal top utility bar */}
-      <header className="relative z-10 flex items-center justify-between px-4 py-3 sm:px-8 sm:py-4">
-        <div className="flex items-center gap-2 text-xs font-semibold text-amber-200/80">
-          <Globe className="h-4 w-4 text-amber-400/90" />
-          <div className="flex items-center gap-1 rounded-lg bg-white/[0.06] p-1">
-            {LANG_OPTIONS.map((opt) => (
-              <button
-                key={opt.code}
-                type="button"
-                onClick={() => onChangeLang(opt.code)}
-                className={`min-h-[34px] rounded-md px-2.5 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
-                  lang === opt.code
-                    ? 'bg-[#C67B1E] text-white shadow-sm'
-                    : 'text-amber-100/75 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {opt.short}
-              </button>
-            ))}
-          </div>
-        </div>
-
+      <header className="relative z-10 flex items-center justify-end px-4 py-3 sm:px-8 sm:py-4">
         <button
           type="button"
           onClick={onToggleMute}
@@ -88,7 +64,6 @@ export function TitleScreen({
                 <div className={member.featured ? '-translate-y-2' : ''}>
                   <CharacterPortrait
                     character={member.id}
-                    lang={lang}
                     size={member.featured ? 'lg' : 'md'}
                     highlighted={member.featured}
                   />
@@ -116,26 +91,8 @@ export function TitleScreen({
             {ui.appSubtitle}
           </p>
 
-          {/* Language buttons row */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            {LANG_OPTIONS.map((opt) => (
-              <button
-                key={opt.code}
-                type="button"
-                onClick={() => onChangeLang(opt.code)}
-                className={`min-h-[40px] rounded-xl border px-4 py-2 text-sm font-bold transition-colors whitespace-nowrap shrink-0 ${
-                  lang === opt.code
-                    ? 'border-[#C67B1E] bg-[#FFF4DC] text-[#8A4D0D]'
-                    : 'border-[#E2D6C3] bg-white text-[#574538] hover:border-[#C9B79B] hover:bg-[#F7F0E3]'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
           {/* Dominant single primary CTA */}
-          <div className="mt-7">
+          <div className="mt-8">
             <button
               type="button"
               onClick={onStart}

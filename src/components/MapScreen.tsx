@@ -1,11 +1,10 @@
-import { ArrowLeft, Globe, Lock, Star, Unlock, Volume2, VolumeX } from 'lucide-react';
-import type { GameSave, Lang } from '../types/game';
+import { ArrowLeft, Lock, Star, Unlock, Volume2, VolumeX } from 'lucide-react';
+import type { GameSave } from '../types/game';
 import { LOCATIONS } from '../data/locations';
 import { UI_TEXT } from '../data/i18n';
 import { CharacterPortrait } from './CharacterPortrait';
 
 interface MapScreenProps {
-  lang: Lang;
   muted: boolean;
   save: GameSave;
   thumbnails: Record<number, string>;
@@ -13,7 +12,6 @@ interface MapScreenProps {
   onSelectLocation: (locationId: number) => void;
   onLockedClick: () => void;
   onUnlockAll: () => void;
-  onCycleLang: () => void;
   onToggleMute: () => void;
   onBackToTitle: () => void;
 }
@@ -25,7 +23,6 @@ function formatTime(sec: number): string {
 }
 
 export function MapScreen({
-  lang,
   muted,
   save,
   thumbnails,
@@ -33,11 +30,10 @@ export function MapScreen({
   onSelectLocation,
   onLockedClick,
   onUnlockAll,
-  onCycleLang,
   onToggleMute,
   onBackToTitle,
 }: MapScreenProps) {
-  const ui = UI_TEXT[lang];
+  const ui = UI_TEXT;
   const totalStars = Object.values(save.stars).reduce((acc, s) => acc + s, 0);
   const allUnlocked = save.unlocked >= LOCATIONS.length;
 
@@ -82,15 +78,6 @@ export function MapScreen({
 
           <button
             type="button"
-            onClick={onCycleLang}
-            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-amber-200/15 bg-white/[0.05] px-3 py-1.5 text-xs font-bold text-amber-100 transition-colors hover:bg-white/10 whitespace-nowrap shrink-0"
-          >
-            <Globe className="h-3.5 w-3.5 text-amber-300" />
-            <span>{lang.toUpperCase()}</span>
-          </button>
-
-          <button
-            type="button"
             onClick={onToggleMute}
             aria-label={muted ? ui.soundOff : ui.soundOn}
             className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-amber-200/15 bg-white/[0.05] text-amber-100 transition-colors hover:bg-white/10 shrink-0"
@@ -129,7 +116,7 @@ export function MapScreen({
                   {thumb ? (
                     <img
                       src={thumb}
-                      alt={loc.title[lang]}
+                      alt={loc.title}
                       referrerPolicy="no-referrer"
                       className={`h-full w-full object-cover transition-transform duration-300 ${
                         isLocked ? 'grayscale' : 'group-hover:scale-105'
@@ -140,7 +127,6 @@ export function MapScreen({
                       <div className="opacity-90">
                         <CharacterPortrait
                           character={loc.featuredCharacter}
-                          lang={lang}
                           size="md"
                           highlighted={!isLocked}
                         />
@@ -187,14 +173,14 @@ export function MapScreen({
                         isLocked ? 'text-stone-300' : 'text-[#2A1F1A]'
                       }`}
                     >
-                      {loc.title[lang]}
+                      {loc.title}
                     </h2>
                     <p
                       className={`mt-1 line-clamp-2 text-xs leading-relaxed ${
                         isLocked ? 'text-stone-400' : 'text-[#6E5A49]'
                       }`}
                     >
-                      {loc.subtitle[lang]}
+                      {loc.subtitle}
                     </p>
                   </div>
                 </div>

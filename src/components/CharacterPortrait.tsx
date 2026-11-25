@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { CharacterId, Lang } from '../types/game';
+import type { CharacterId } from '../types/game';
 import { UI_TEXT } from '../data/i18n';
 
 interface CharacterPortraitProps {
   character: CharacterId;
-  lang: Lang;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   highlighted?: boolean;
   className?: string;
@@ -33,7 +32,6 @@ const SIZE_CLASSES: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
 
 export function CharacterPortrait({
   character,
-  lang,
   size = 'md',
   highlighted = false,
   className = '',
@@ -44,7 +42,7 @@ export function CharacterPortrait({
     setFailed(false);
   }, [character]);
 
-  const name = UI_TEXT[lang].characters[character];
+  const name = UI_TEXT.characters[character];
   const fallback = FALLBACK_STYLES[character];
 
   return (

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
-  Globe,
   Lightbulb,
   Map as MapIcon,
   Maximize2,
@@ -12,7 +11,7 @@ import {
   ZoomOut,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import type { CachedSceneData, HiddenItem, Lang, LocationDef } from '../types/game';
+import type { CachedSceneData, HiddenItem, LocationDef } from '../types/game';
 import { UI_TEXT } from '../data/i18n';
 import { audioEngine } from '../lib/audioEngine';
 import { AmbientOverlay } from './AmbientOverlay';
@@ -22,10 +21,8 @@ import { VictoryModal } from './VictoryModal';
 
 interface GameScreenProps {
   location: LocationDef;
-  lang: Lang;
   muted: boolean;
   scene: CachedSceneData;
-  onCycleLang: () => void;
   onToggleMute: () => void;
   onBackToMap: () => void;
   onCompleteLocation: (stars: number, elapsedSec: number) => void;
@@ -56,16 +53,14 @@ function formatTime(sec: number): string {
 
 export function GameScreen({
   location,
-  lang,
   muted,
   scene,
-  onCycleLang,
   onToggleMute,
   onBackToMap,
   onCompleteLocation,
   onNextLocation,
 }: GameScreenProps) {
-  const ui = UI_TEXT[lang];
+  const ui = UI_TEXT;
 
   // Intro flow: show Mini-Story & Dialogues before playing each location
   const [introDone, setIntroDone] = useState(false);
@@ -310,13 +305,13 @@ export function GameScreen({
 
       setBursts((prev) => [
         ...prev,
-        { id: burstId, xPct: cxPct, yPct: cyPct, label: item.names[lang] },
+        { id: burstId, xPct: cxPct, yPct: cyPct, label: item.name },
       ]);
       scheduleTimeout(() => {
         setBursts((prev) => prev.filter((b) => b.id !== burstId));
       }, 1150);
 
-      showToast(`${ui.foundToastPrefix} ${item.names[lang]}`);
+      showToast(`${ui.foundToastPrefix} ${item.name}`);
 
       if (hintTargetId === item.id) {
         setHintTargetId(null);
@@ -362,7 +357,6 @@ export function GameScreen({
     [
       foundIds,
       justFoundIds,
-      lang,
       showToast,
       ui.foundToastPrefix,
       hintTargetId,
@@ -478,7 +472,7 @@ export function GameScreen({
     setHintsLeft((prev) => Math.max(0, prev - 1));
     setHintTargetId(target.id);
     audioEngine.playHint();
-    showToast(`${ui.hintActiveToast} (${target.names[lang]})`, 3000);
+    showToast(`${ui.hintActiveToast} (${target.name})`, 3000);
 
     // Compute pan offset to center target's box_2d at comfortable zoom
     const [ymin, xmin, ymax, xmax] = target.box_2d;
@@ -507,7 +501,6 @@ export function GameScreen({
     foundIds,
     justFoundIds,
     itemMap,
-    lang,
     defaultZoom,
     fittedSize,
     clampPan,
@@ -660,7 +653,7 @@ export function GameScreen({
 
           <div className="min-w-0">
             <h1 className="font-display truncate text-sm font-bold text-[#FFF6E5] sm:text-base">
-              {location.id}. {location.title[lang]}
+              {location.id}. {location.title}
             </h1>
           </div>
         </div>
@@ -751,17 +744,6 @@ export function GameScreen({
           >
             {muted ? <VolumeX className="h-4 w-4 text-stone-400" /> : <Volume2 className="h-4 w-4 text-amber-300" />}
           </button>
-
-          {/* Language cycle */}
-          <button
-            type="button"
-            onClick={onCycleLang}
-            title="RU / UK / SK"
-            className="inline-flex h-[38px] items-center gap-1 rounded-lg border border-amber-200/15 bg-white/[0.05] px-2 text-xs font-bold text-amber-100 hover:bg-white/12 whitespace-nowrap shrink-0"
-          >
-            <Globe className="h-3.5 w-3.5 text-amber-300" />
-            <span>{lang.toUpperCase()}</span>
-          </button>
         </div>
       </header>
 
@@ -794,7 +776,7 @@ export function GameScreen({
             <img
               ref={imgRef}
               src={scene.imageDataUrl}
-              alt={location.title[lang]}
+              alt={location.title}
               referrerPolicy="no-referrer"
               draggable={false}
               onLoad={() => setImageLoaded(true)}
@@ -862,7 +844,7 @@ export function GameScreen({
           {/* Smooth loading screen while the local illustration image finishes decoding */}
           {!imageLoaded && (
             <div className="absolute inset-0 z-25">
-              <LoadingScreen lang={lang} location={location} />
+              <LoadingScreen location={location} />
             </div>
           )}
 
@@ -962,9 +944,9 @@ export function GameScreen({
                         className={`truncate text-xs font-bold leading-snug lg:text-[14px] ${
                           isJustFound ? 'line-through opacity-75' : ''
                         }`}
-                        title={item.names[lang]}
+                        title={item.name}
                       >
-                        {item.names[lang]}
+                        {item.name}
                       </div>
                       <div className="hidden text-[11px] font-medium text-[#8B7662] lg:block">
                         {ui.difficulty[item.difficulty]}
@@ -994,7 +976,6 @@ export function GameScreen({
         <StoryDialogueModal
           key={location.id}
           location={location}
-          lang={lang}
           onFinish={() => setIntroDone(true)}
         />
       )}
@@ -1003,7 +984,6 @@ export function GameScreen({
       {victory && (
         <VictoryModal
           location={location}
-          lang={lang}
           elapsedSec={victory.elapsed}
           hintsUsed={victory.hintsUsed}
           totalItems={totalItems}

@@ -1,23 +1,15 @@
-export type Lang = 'ru' | 'uk' | 'sk';
-
 export type CharacterId = 'mila' | 'liza' | 'sasha' | 'misha';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export type AmbientEffectType = 'dust' | 'steam' | 'breeze' | 'twinkle' | 'sea';
 
-export interface LocalizedText {
-  ru: string;
-  uk: string;
-  sk: string;
-}
-
 export interface HiddenItem {
   id: string;
   /** [ymin, xmin, ymax, xmax] on a 0..1000 normalized scale */
   box_2d: [number, number, number, number];
   difficulty: Difficulty;
-  names: LocalizedText;
+  name: string;
 }
 
 export interface CachedSceneData {
@@ -29,17 +21,17 @@ export interface CachedSceneData {
 
 export interface DialogueLine {
   speaker: CharacterId;
-  text: LocalizedText;
+  text: string;
 }
 
 export interface LocationDef {
   id: number; // 1..15
-  title: LocalizedText;
-  subtitle: LocalizedText;
+  title: string;
+  subtitle: string;
   featuredCharacter: CharacterId;
-  miniStory: LocalizedText;
+  miniStory: string;
   dialogues: DialogueLine[];
-  outro: LocalizedText;
+  outro: string;
   ambient: AmbientEffectType;
   cardAccent: string;
 }

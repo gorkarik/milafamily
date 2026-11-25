@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import { ArrowRight, BookOpen, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import type { Lang, LocationDef } from '../types/game';
+import type { LocationDef } from '../types/game';
 import { UI_TEXT } from '../data/i18n';
 import { CharacterPortrait } from './CharacterPortrait';
 import { audioEngine } from '../lib/audioEngine';
 
 interface StoryDialogueModalProps {
   location: LocationDef;
-  lang: Lang;
   onFinish: () => void;
 }
 
-export function StoryDialogueModal({ location, lang, onFinish }: StoryDialogueModalProps) {
-  const ui = UI_TEXT[lang];
+export function StoryDialogueModal({ location, onFinish }: StoryDialogueModalProps) {
+  const ui = UI_TEXT;
   const [phase, setPhase] = useState<'story' | 'dialogue'>('story');
   const [dialogueIndex, setDialogueIndex] = useState(0);
 
@@ -73,22 +72,21 @@ export function StoryDialogueModal({ location, lang, onFinish }: StoryDialogueMo
               <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
                 <CharacterPortrait
                   character={location.featuredCharacter}
-                  lang={lang}
                   size="lg"
                   highlighted
                 />
                 <div className="text-center sm:text-left">
                   <h2 className="font-display text-2xl font-bold leading-tight text-[#2A1F1A] sm:text-3xl">
-                    {location.title[lang]}
+                    {location.title}
                   </h2>
                   <p className="mt-1 text-sm font-medium text-[#7A644E]">
-                    {location.subtitle[lang]}
+                    {location.subtitle}
                   </p>
                 </div>
               </div>
 
               <p className="mt-5 text-[15px] leading-relaxed text-[#3A2D25] sm:text-base sm:leading-7">
-                {location.miniStory[lang]}
+                {location.miniStory}
               </p>
 
               <div className="mt-6 flex items-center justify-end gap-3 border-t border-[#EAE0CF] pt-4">
@@ -114,7 +112,7 @@ export function StoryDialogueModal({ location, lang, onFinish }: StoryDialogueMo
           >
             <div className="flex items-center justify-between border-b border-[#E7DBC7] bg-[#F2E9D8] px-5 py-3 text-xs font-semibold text-[#7A644E]">
               <span className="truncate">
-                {location.id}. {location.title[lang]}
+                {location.id}. {location.title}
               </span>
               <span className="font-mono-tabular shrink-0 pl-3">
                 {dialogueIndex + 1} / {location.dialogues.length}
@@ -125,7 +123,6 @@ export function StoryDialogueModal({ location, lang, onFinish }: StoryDialogueMo
               <div className="flex items-start gap-4 sm:gap-5">
                 <CharacterPortrait
                   character={currentLine.speaker}
-                  lang={lang}
                   size="lg"
                   highlighted
                 />
@@ -139,7 +136,7 @@ export function StoryDialogueModal({ location, lang, onFinish }: StoryDialogueMo
                     </span>
                   </div>
                   <p className="mt-2 text-[15px] leading-relaxed font-medium text-[#2A1F1A] sm:text-base">
-                    «{currentLine.text[lang]}»
+                    «{currentLine.text}»
                   </p>
                 </div>
               </div>

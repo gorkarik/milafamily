@@ -1,12 +1,11 @@
 import { ArrowRight, Map, RotateCcw, Star } from 'lucide-react';
 import { motion } from 'motion/react';
-import type { Lang, LocationDef } from '../types/game';
+import type { LocationDef } from '../types/game';
 import { UI_TEXT } from '../data/i18n';
 import { CharacterPortrait } from './CharacterPortrait';
 
 interface VictoryModalProps {
   location: LocationDef;
-  lang: Lang;
   elapsedSec: number;
   hintsUsed: number;
   totalItems: number;
@@ -24,7 +23,6 @@ function formatTime(sec: number): string {
 
 export function VictoryModal({
   location,
-  lang,
   elapsedSec,
   hintsUsed,
   totalItems,
@@ -33,7 +31,7 @@ export function VictoryModal({
   onReplay,
   onNext,
 }: VictoryModalProps) {
-  const ui = UI_TEXT[lang];
+  const ui = UI_TEXT;
   const isFinale = location.id === 15;
 
   return (
@@ -48,19 +46,19 @@ export function VictoryModal({
           {/* Family portraits */}
           {isFinale ? (
             <div className="mb-4 flex items-end justify-center gap-2 sm:gap-3">
-              <CharacterPortrait character="sasha" lang={lang} size="sm" />
-              <CharacterPortrait character="liza" lang={lang} size="md" />
-              <CharacterPortrait character="mila" lang={lang} size="lg" highlighted />
-              <CharacterPortrait character="misha" lang={lang} size="sm" />
+              <CharacterPortrait character="sasha" size="sm" />
+              <CharacterPortrait character="liza" size="md" />
+              <CharacterPortrait character="mila" size="lg" highlighted />
+              <CharacterPortrait character="misha" size="sm" />
             </div>
           ) : (
             <div className="mb-4 flex justify-center">
-              <CharacterPortrait character="mila" lang={lang} size="lg" highlighted />
+              <CharacterPortrait character="mila" size="lg" highlighted />
             </div>
           )}
 
           <p className="text-xs font-bold tracking-wide text-[#9C5710]">
-            {ui.chapterLabel} {location.id} · {location.title[lang]}
+            {ui.chapterLabel} {location.id} · {location.title}
           </p>
           <h2 className="font-display mt-1 text-2xl font-bold text-[#2A1F1A] sm:text-3xl">
             {isFinale ? ui.finaleTitle : ui.victoryTitle}
@@ -83,7 +81,7 @@ export function VictoryModal({
 
         <div className="px-6 py-5">
           <p className="text-[15px] italic leading-relaxed text-[#433329]">
-            {location.outro[lang]}
+            {location.outro}
           </p>
 
           {/* Clean tabular summary row */}

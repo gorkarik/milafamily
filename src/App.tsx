@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { GameSave, Lang } from './types/game';
+import type { GameSave } from './types/game';
 import { getLocationById, LOCATIONS } from './data/locations';
 import { PREBAKED_SCENES } from './data/prebakedScenes';
 import { UI_TEXT } from './data/i18n';
@@ -11,17 +11,6 @@ import { GameScreen } from './components/GameScreen';
 type ScreenMode = 'title' | 'map' | 'game';
 
 const SAVE_KEY = 'mila_adventure_save_v2';
-const LANG_KEY = 'mila_l';
-
-function loadInitialLang(): Lang {
-  try {
-    const saved = localStorage.getItem(LANG_KEY);
-    if (saved === 'ru' || saved === 'uk' || saved === 'sk') return saved;
-  } catch {
-    // ignore storage errors in restricted iframes
-  }
-  return 'ru';
-}
 
 function loadInitialSave(): GameSave {
   try {
@@ -42,7 +31,6 @@ function loadInitialSave(): GameSave {
 
 export default function App() {
   const [screen, setScreen] = useState<ScreenMode>('title');
-  const [lang, setLang] = useState<Lang>(loadInitialLang);
   const [muted, setMuted] = useState<boolean>(() => audioEngine.isMuted());
   const [save, setSave] = useState<GameSave>(loadInitialSave);
   const [mapToast, setMapToast] = useState<string | null>(null);
@@ -50,7 +38,7 @@ export default function App() {
 
   const mapToastTimerRef = useRef<number | null>(null);
 
-  // Persist save & language
+  // Persist save
   useEffect(() => {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -60,13 +48,8 @@ export default function App() {
   }, [save]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(LANG_KEY, lang);
-    } catch {
-      // ignore
-    }
-    document.documentElement.lang = lang;
-  }, [lang]);
+    document.documentElement.lang = 'ru';
+  }, []);
 
   // Global first-gesture audio unlock for iOS/Android
   useEffect(() => {
@@ -104,17 +87,6 @@ export default function App() {
     if (mapToastTimerRef.current) window.clearTimeout(mapToastTimerRef.current);
     mapToastTimerRef.current = window.setTimeout(() => setMapToast(null), 2200);
   }, []);
-
-  const handleChangeLang = useCallback((nextLang: Lang) => {
-    audioEngine.playTap();
-    setLang(nextLang);
-  }, []);
-
-  const handleCycleLang = useCallback(() => {
-    const order: Lang[] = ['ru', 'uk', 'sk'];
-    const next = order[(order.indexOf(lang) + 1) % order.length];
-    handleChangeLang(next);
-  }, [lang, handleChangeLang]);
 
   const handleToggleMute = useCallback(() => {
     const nextMuted = audioEngine.toggleMute();
@@ -164,11 +136,9 @@ export default function App() {
   if (screen === 'title') {
     return (
       <TitleScreen
-        lang={lang}
         muted={muted}
         hasProgress={save.unlocked > 1 || totalStars > 0}
         totalStars={totalStars}
-        onChangeLang={handleChangeLang}
         onToggleMute={handleToggleMute}
         onStart={() => {
           audioEngine.playTap();
@@ -181,7 +151,6 @@ export default function App() {
   if (screen === 'map') {
     return (
       <MapScreen
-        lang={lang}
         muted={muted}
         save={save}
         thumbnails={thumbnails}
@@ -189,14 +158,13 @@ export default function App() {
         onSelectLocation={handleOpenLocation}
         onLockedClick={() => {
           audioEngine.playMiss();
-          showMapToast(UI_TEXT[lang].lockedToast);
+          showMapToast(UI_TEXT.lockedToast);
         }}
         onUnlockAll={() => {
           audioEngine.playTap();
           setSave((prev) => ({ ...prev, unlocked: LOCATIONS.length }));
-          showMapToast(UI_TEXT[lang].unlockAllToast);
+          showMapToast(UI_TEXT.unlockAllToast);
         }}
-        onCycleLang={handleCycleLang}
         onToggleMute={handleToggleMute}
         onBackToTitle={() => {
           audioEngine.playTap();
@@ -209,10 +177,8 @@ export default function App() {
   return (
     <GameScreen
       location={currentLocation}
-      lang={lang}
       muted={muted}
       scene={currentScene}
-      onCycleLang={handleCycleLang}
       onToggleMute={handleToggleMute}
       onBackToMap={() => setScreen('map')}
       onCompleteLocation={handleCompleteLocation}
