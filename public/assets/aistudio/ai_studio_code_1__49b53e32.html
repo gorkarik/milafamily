@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Большое приключение Милы</title>
+<style>
+:root{--panel:rgba(255,252,245,.96);--text:#2c2246;--shadow:0 10px 28px rgba(20,12,46,.35)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;padding:0;width:100%;height:100dvh;overflow:hidden;font-family:'Segoe UI','Nunito',system-ui,sans-serif;background:radial-gradient(circle at top,#3b2d6f,#1b1636);color:var(--text)}
+#app{width:100%;height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:20;padding:12px;overflow-y:auto}
+.screen.active{display:flex}
+#title-screen{background:linear-gradient(180deg,#6ec6ff 0%,#a8e6ff 45%,#fff0c2 75%,#8be08b 100%)}
+.card{background:var(--panel);border-radius:26px;padding:22px;max-width:620px;width:100%;box-shadow:var(--shadow),0 0 0 5px rgba(255,255,255,.6);text-align:center}
+.portraits{display:flex;justify-content:center;gap:10px;margin-bottom:8px}
+.p-badge{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#fff5d6,#ffd6e7);border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.15);overflow:hidden;flex-shrink:0}
+.p-badge.main{width:82px;height:82px;transform:translateY(-5px);border-color:#ff8fab}
+.logo{font-size:clamp(22px,4.5vw,33px);font-weight:900;margin:4px 0 6px;background:linear-gradient(90deg,#ff5e8e,#ff9933,#2ec4b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{font-size:clamp(13px,2.2vw,15.5px);color:#5b4e7c;margin:0 0 15px;line-height:1.4}
+.lang-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.lang-btn{border:3px solid #e6def5;background:#fff;border-radius:14px;padding:8px 14px;font-size:14px;font-weight:800;cursor:pointer;color:var(--text)}
+.lang-btn.active{background:#fff4d9;border-color:#ff7b9c;box-shadow:0 4px 10px rgba(255,107,139,.25)}
+.btn1{background:linear-gradient(180deg,#ff7a98,#f24c7c);color:#fff;border:none;border-radius:16px;padding:13px 30px;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #c12d58,0 8px 20px rgba(242,76,124,.35)}
+.btn1:active{transform:translateY(3px);box-shadow:0 2px 0 #c12d58}
+.btn2{background:linear-gradient(180deg,#4fd1c5,#2ba89d);color:#fff;border:none;border-radius:13px;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #1e7f76}
+.btn2:active{transform:translateY(2px);box-shadow:0 2px 0 #1e7f76}
+#map-screen{background:linear-gradient(180deg,#5cc4ff,#98e6a8);justify-content:flex-start}
+.map-head{width:100%;max-width:1020px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel);padding:10px 14px;border-radius:16px;box-shadow:var(--shadow);margin-bottom:10px;flex-wrap:wrap}
+.map-grid{width:100%;max-width:1020px;display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px;padding-bottom:20px}
+.sbtn{border:2px solid #dfd7f2;background:#fff;color:var(--text);border-radius:11px;padding:5px 10px;font-weight:800;font-size:13px;cursor:pointer}
+.loc-card{background:var(--panel);border-radius:16px;padding:10px;cursor:pointer;box-shadow:0 5px 15px rgba(25,20,60,.16);border:3px solid #fff;display:flex;flex-direction:column;gap:5px;transition:.15s}
+.loc-card:hover:not(.locked){transform:translateY(-3px);border-color:#ff7a98}
+.loc-card.locked{opacity:.6;filter:grayscale(.55);cursor:not-allowed}
+.loc-card.done{border-color:#2ec4b6}
+.loc-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#ff7a98,#ffb84d);color:#fff;font-weight:900;font-size:12px}
+#game-screen{display:none;flex-direction:column;width:100%;height:100dvh;position:relative;z-index:5}
+#game-screen.active{display:flex}
+.hud-top{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:6px 9px;background:rgba(25,18,52,.94);color:#fff;border-bottom:2px solid rgba(255,255,255,.12);flex-shrink:0;z-index:10;flex-wrap:wrap}
+.hud-g{display:flex;align-items:center;gap:5px}
+.pill,.hbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.24);border-radius:10px;padding:4px 8px;font-size:13px;font-weight:800;color:#fff;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.hbtn{cursor:pointer}
+.hbtn.hint{background:linear-gradient(180deg,#ffcf56,#f59e0b);color:#3a1f00;border-color:#ffe28a}
+.hbtn.hint:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.7)}
+.loc-ttl{font-weight:900;font-size:14px;color:#ffe699;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stage{flex:1;position:relative;overflow:hidden;background:#16122c;touch-action:none;display:flex;align-items:center;justify-content:center}
+#vp{width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform-origin:center center;will-change:transform}
+#svg{width:100%;height:100%;max-width:100%;max-height:100%;display:block}
+.h-item{cursor:pointer}
+.h-item.found{pointer-events:none;animation:popF .5s ease-out forwards}
+@keyframes popF{0%{opacity:1;filter:drop-shadow(0 0 12px #fff)}50%{opacity:1;filter:drop-shadow(0 0 22px #ffe066)}100%{opacity:0}}
+.hud-bot{background:rgba(255,251,244,.97);border-top:3px solid #ffd599;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:6px;overflow-x:auto;flex-shrink:0;z-index:10}
+.chip{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:12px;background:#fff;border:2px solid #e4dbf5;font-size:12.5px;font-weight:800;color:var(--text);white-space:nowrap;flex-shrink:0}
+.chip.found{background:#dffaf0;border-color:#2ec4b6;color:#197a70;opacity:.62;text-decoration:line-through}
+.c-ico{width:24px;height:24px;flex-shrink:0}
+#toast{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(35,24,68,.92);color:#fff;padding:7px 16px;border-radius:18px;font-weight:800;font-size:13.5px;pointer-events:none;opacity:0;transition:.22s;z-index:30;border:2px solid #ffb84d;text-align:center}
+#toast.show{opacity:1}
+.modal{position:absolute;inset:0;background:rgba(18,12,42,.68);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:40;padding:12px}
+.modal.active{display:flex}
+.dbox{background:var(--panel);border-radius:22px;max-width:580px;width:100%;padding:18px;box-shadow:var(--shadow),0 0 0 4px #ffd599;display:flex;flex-direction:column;gap:12px}
+.drow{display:flex;align-items:center;gap:12px}
+.dav{width:82px;height:82px;border-radius:50%;border:4px solid #ff9bb3;background:#fff5dc;flex-shrink:0;overflow:hidden}
+.dspk{font-weight:900;font-size:15.5px;color:#e84574;margin-bottom:3px}
+.dtxt{font-size:15px;line-height:1.4;color:var(--text);font-weight:600}
+.dfoot{display:flex;justify-content:space-between;align-items:center}
+.stats{display:flex;justify-content:center;gap:14px;background:#f6f1ff;padding:9px;border-radius:12px;font-weight:800;font-size:14px}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes sway{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+@keyframes pend{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(16deg)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes swim{0%,100%{transform:translateX(0)}50%{transform:translateX(46px)}}
+@keyframes steam{0%{transform:translateY(0) scale(.8);opacity:0}30%{opacity:.85}100%{transform:translateY(-36px) scale(1.4);opacity:0}}
+@keyframes glow{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-24deg)}}
+@keyframes scr{0%,100%{transform:translateX(0)}50%{transform:translateX(26px)}}
+@keyframes cld{0%,100%{transform:translateX(-16px)}50%{transform:translateX(22px)}}
+@keyframes flt{0%,100%{transform:translate(0,0)}33%{transform:translate(22px,-14px)}66%{transform:translate(38px,6px)}}
+@keyframes beam{0%,100%{transform:rotate(-16deg);opacity:.3}50%{transform:rotate(16deg);opacity:.65}}
+@keyframes hp{0%{transform:scale(.6);opacity:1}80%{transform:scale(1.5);opacity:.3}100%{transform:scale(1.7);opacity:0}}
+.a-sf{animation:spin 1.1s linear infinite}.a-sm{animation:spin 4.5s linear infinite}.a-ss{animation:spin 13s linear infinite}
+.a-sw{animation:sway 3s ease-in-out infinite}.a-pd{animation:pend 1.8s ease-in-out infinite}.a-bb{animation:bob 2.3s ease-in-out infinite}
+.a-xm{animation:swim 5.5s ease-in-out infinite}.a-st{animation:steam 2s ease-out infinite}.a-st2{animation:steam 2s ease-out 1s infinite}
+.a-gl{animation:glow 1.5s ease-in-out infinite}.a-wv{animation:wave 1.4s ease-in-out infinite}.a-sc{animation:scr 2s ease-in-out infinite}
+.a-cl{animation:cld 9s ease-in-out infinite}.a-fl{animation:flt 5s ease-in-out infinite}.a-bm{animation:beam 4.5s ease-in-out infinite}
+.hring{animation:hp 1.1s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@media(max-width:700px){.loc-ttl{display:none}.dav{width:64px;height:64px}.dtxt{font-size:13.5px}.hud-bot{justify-content:flex-start}.pill,.hbtn{font-size:12px;padding:4px 6px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="title-screen" class="screen active">
+    <div class="card">
+      <div class="portraits" id="t-ports"></div>
+      <h1 class="logo" id="u-title"></h1>
+      <p class="sub" id="u-sub"></p>
+      <div class="lang-row">
+        <button class="lang-btn" data-l="ru" onclick="setLang('ru')">🇷🇺 Русский</button>
+        <button class="lang-btn" data-l="uk" onclick="setLang('uk')">🇺🇦 Українська</button>
+        <button class="lang-btn" data-l="sk" onclick="setLang('sk')">🇸🇰 Slovenčina</button>
+      </div>
+      <button class="btn1" id="u-play" onclick="goMap()"></button>
+    </div>
+  </div>
+
+  <div id="map-screen" class="screen">
+    <div class="map-head">
+      <b style="font-size:18px" id="u-mapt"></b>
+      <div class="hud-g">
+        <span class="sbtn" id="u-stars">⭐ 0/45</span>
+        <button class="sbtn" id="u-unlk" onclick="unlockAll()"></button>
+        <button class="sbtn" onclick="cycleLang()">🌐 <span id="u-lc">RU</span></button>
+        <button class="sbtn" id="u-msnd" onclick="toggleAudio()">🔊</button>
+      </div>
+    </div>
+    <div class="map-grid" id="map-grid"></div>
+  </div>
+
+  <div id="game-screen">
+    <div class="hud-top">
+      <div class="hud-g">
+        <button class="hbtn" onclick="openMap()">🗺️ <span id="u-bmap"></span></button>
+        <span class="loc-ttl" id="h-title"></span>
+      </div>
+      <div class="hud-g">
+        <span class="pill">⏱️ <span id="h-time">00:00</span></span>
+        <span class="pill">🔍 <span id="h-fnd">0/6</span></span>
+        <button class="hbtn hint" id="b-hint" onclick="useHint()">💡 <span id="h-hnt">3</span></button>
+        <button class="hbtn" onclick="zStep(-.35)">−</button>
+        <button class="hbtn" onclick="zStep(.35)">+</button>
+        <button class="hbtn" onclick="resetV()">↺</button>
+        <button class="hbtn" id="b-snd" onclick="toggleAudio()">🔊</button>
+        <button class="hbtn" onclick="cycleLang()">🌐</button>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <div id="vp"><svg id="svg" viewBox="0 0 1200 720" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div id="toast"></div>
+    </div>
+    <div class="hud-bot" id="tray"></div>
+
+    <div class="modal" id="d-mod">
+      <div class="dbox">
+        <div class="drow">
+          <div class="dav" id="d-av"></div>
+          <div><div class="dspk" id="d-spk"></div><div class="dtxt" id="d-txt"></div></div>
+        </div>
+        <div class="dfoot">
+          <span style="font-size:12px;color:#8c7db0;font-weight:800" id="d-dot"></span>
+          <button class="btn1" id="d-nxt" onclick="nextDlg()"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="w-mod">
+      <div class="dbox" style="text-align:center">
+        <div id="w-ports" style="display:flex;justify-content:center;gap:8px"></div>
+        <h2 style="margin:0;color:#e84574" id="w-head"></h2>
+        <div style="font-size:38px;letter-spacing:5px" id="w-st"></div>
+        <div class="dtxt" id="w-out" style="font-style:italic"></div>
+        <div class="stats"><span id="w-tm"></span><span id="w-hn"></span></div>
+        <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+          <button class="btn2" id="w-mp" onclick="openMap()"></button>
+          <button class="btn2" id="w-rp" onclick="loadScene(CUR)"></button>
+          <button class="btn1" id="w-nx" onclick="nextSc()"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// === 1. UI TEXTS (RU / UK / SK) ===
+let L=localStorage.getItem('mila_l')||'ru';
+const U={
+ ru:{t:'Большое приключение Милы',s:'Помоги Миле, маме Лизе, папе Саше и братику Мише найти все спрятанные вещи на 15 ярких локациях и успеть на Большой семейный праздник!',p:'▶ Начать приключение',mt:'🗺️ Карта приключения (15 локаций)',bm:'Карта',ul:'🔓 Открыть все',ult:'Все 15 локаций открыты!',nx:'Дальше ➜',go:'🔍 Искать предметы!',wh:'Отличная работа!',fh:'🎉 С праздником, любимая семья!',rp:'↺ Ещё раз',nl:'Дальше ➜',fn:'🏆 На карту',tl:'Время',hl:'Подсказки',fd:'Найдено:',nh:'Подсказки закончились!',sl:'Не спеши, присмотрись! 👀',hu:'Золотой лучик указывает путь! ✨',lk:'Сначала пройди предыдущую локацию!',bs:'Рекорд',sp:{mila:'Мила',liza:'Мама Лиза',sasha:'Папа Саша',misha:'Миша'}},
+ uk:{t:'Велика пригода Міли',s:'Допоможи Мілі, мамі Лізі, татові Саші та братику Міші знайти всі заховані речі на 15 яскравих локаціях і встигнути на Велике сімейне свято!',p:'▶ Почати пригоду',mt:'🗺️ Карта пригоди (15 локацій)',bm:'Карта',ul:'🔓 Відкрити всі',ult:'Усі 15 локацій відкрито!',nx:'Далі ➜',go:'🔍 Шукати предмети!',wh:'Чудова робота!',fh:'🎉 Зі святом, люба родино!',rp:'↺ Ще раз',nl:'Далі ➜',fn:'🏆 На карту',tl:'Час',hl:'Підказки',fd:'Знайдено:',nh:'Підказки закінчилися!',sl:'Не поспішай, придивись! 👀',hu:'Золотий промінчик показує шлях! ✨',lk:'Спочатку пройди попередню локацію!',bs:'Рекорд',sp:{mila:'Міла',liza:'Мама Ліза',sasha:'Тато Саша',misha:'Міша'}},
+ sk:{t:'Veľké dobrodružstvo Mily',s:'Pomôž Mile, mame Lize, ockovi Sašovi a bračekovi Miškovi nájsť všetky ukryté veci na 15 miestach a stihnúť Veľkú rodinnú oslavu!',p:'▶ Začať dobrodružstvo',mt:'🗺️ Mapa dobrodružstva (15 miest)',bm:'Mapa',ul:'🔓 Odomknúť všetky',ult:'Všetkých 15 miest odomknutých!',nx:'Ďalej ➜',go:'🔍 Hľadať predmety!',wh:'Skvelá práca!',fh:'🎉 Šťastnú oslavu, rodinka!',rp:'↺ Znova',nl:'Ďalej ➜',fn:'🏆 Na mapu',tl:'Čas',hl:'Nápovedy',fd:'Nájdené:',nh:'Nápovedy sa minuli!',sl:'Neponáhľaj sa, rozhliadni sa! 👀',hu:'Zlatý lúč ukazuje smer! ✨',lk:'Najprv dokonči predchádzajúce miesto!',bs:'Rekord',sp:{mila:'Mila',liza:'Mama Liza',sasha:'Ocko Saša',misha:'Miško'}}
+};
+
+// === 2. SVG HELPERS ===
+const R=(x,y,w,h,f,r=0,s='',sw=0)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s?` stroke="${s}" stroke-width="${sw}"`:''}/>`;
+const C=(x,y,r,f,s='',sw=0)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}"${s?` stroke="${s}" stroke-width="${sw}"`:''}/>`;
+const E=(x,y,rx,ry,f,s='',sw=0)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${f}"${s?` stroke="${s}" stroke-width="${sw}"`:''}/>`;
+const P=(d,f,s='',sw=0)=>`<polygon points="${d}" fill="${f}"${s?` stroke="${s}" stroke-width="${sw}"`:''}/>`;
+const Ln=(x1,y1,x2,y2,s,w=2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>`;
+
+// === 3. CHARACTER PORTRAITS (FROM PHOTOS) & FULL-BODY ===
+function port(w){
+ if(w==='mila')return`<svg viewBox="0 0 100 100" width="100%" height="100%">${C(50,50,50,'#ffeaf3')}<path d="M18 48C14 70 16 90 25 98H75C84 90 86 70 82 48 82 22 68 14 50 14 32 14 18 22 18 48Z" fill="#dfb368"/><path d="M22 98C24 78 34 74 50 74 66 74 76 78 78 98Z" fill="#fff" stroke="#e2d9eb" stroke-width="1.5"/>${P('58,83 60,79 63,82 66,79 68,83','#f3c65f')}${R(44,65,12,12,'#fde0cf',5)}${E(50,48,22,24,'#ffe6d6')}${E(36,54,4.5,2.5,'#ff9eb5')}${E(64,54,4.5,2.5,'#ff9eb5')}${C(41,47,3.5,'#3a6ea5')}${C(40,46,1.2,'#fff')}${C(59,47,3.5,'#3a6ea5')}${C(58,46,1.2,'#fff')}<path d="M43 59Q50 64 57 59" fill="none" stroke="#d96b82" stroke-width="2.2" stroke-linecap="round"/><path d="M27 42C28 24 40 20 50 20 60 20 72 24 73 42 68 30 60 27 50 27 40 27 32 30 27 42Z" fill="#f0d388"/><path d="M31 27Q50 15 69 27" fill="none" stroke="#e9a4b8" stroke-width="3"/><path d="M37 24L42 15 47 21 50 11 53 21 58 15 63 24" fill="none" stroke="#fff3c4" stroke-width="2"/>${C(50,12,2.2,'#fff')}</svg>`;
+ if(w==='liza')return`<svg viewBox="0 0 100 100" width="100%" height="100%">${C(50,50,50,'#e6f5ff')}<path d="M16 46C12 72 14 92 22 99H78C86 92 88 72 84 46 84 20 68 12 50 12 32 12 16 20 16 46Z" fill="#e0ba72"/><path d="M18 99C20 77 33 72 50 72 67 72 80 77 82 99Z" fill="#fff" stroke="#dcd6e6" stroke-width="1.5"/>${P('39,73 50,89 61,73','#fde0cf')}<path d="M41 75Q50 86 59 75" fill="none" stroke="#e5b84b" stroke-width="1.3"/>${C(50,83,1.6,'none','#e5b84b',1.1)}${R(44,64,12,12,'#fde0cf',4)}${E(50,46,22,24,'#ffe6d7')}${C(41,45,3.4,'#3a6ea5')}${C(40,44,1.2,'#fff')}${C(59,45,3.4,'#3a6ea5')}${C(58,44,1.2,'#fff')}<path d="M35 39Q41 35 46 39M54 39Q59 35 65 39" fill="none" stroke="#7c563a" stroke-width="2"/><path d="M42 57Q50 63 58 57Q50 60 42 57Z" fill="#e87a96"/><path d="M26 42C28 19 46 15 62 20 72 23 76 34 75 45 68 30 56 26 44 29 35 31 30 36 26 42Z" fill="#f2d99b"/></svg>`;
+ if(w==='sasha')return`<svg viewBox="0 0 100 100" width="100%" height="100%">${C(50,50,50,'#e6f5e8')}<path d="M14 100C16 77 30 72 50 72 70 72 84 77 86 100Z" fill="#364228"/><path d="M37 73Q50 83 63 73" fill="none" stroke="#26301b" stroke-width="4"/>${R(42,64,16,12,'#f7d6c1',5)}${C(25,48,5,'#f7d6c1')}${C(75,48,5,'#f7d6c1')}${E(50,47,25,25,'#fce0ce')}<path d="M26 42C26 22 37 16 50 16 63 16 74 22 74 42 70 30 62 27 50 27 38 27 30 30 26 42Z" fill="#6f5844"/><path d="M27 50C28 65 38 72 50 72 62 72 72 65 73 50 69 59 61 65 50 65 39 65 31 59 27 50Z" fill="#8b7059" opacity=".45"/>${C(40,45,3,'#3f6a96')}${C(60,45,3,'#3f6a96')}<path d="M42 59Q50 63 58 59" fill="none" stroke="#b96d64" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+ return`<svg viewBox="0 0 100 100" width="100%" height="100%">${C(50,50,50,'#fff5d6')}<path d="M22 100C24 80 34 76 50 76 66 76 76 80 78 100Z" fill="#ff9f43"/>${R(34,82,32,18,'#4b7bec',4)}${R(37,76,6,12,'#4b7bec')}${R(57,76,6,12,'#4b7bec')}${C(50,50,23,'#ffe7d6')}<path d="M29 44C30 26 42 22 50 24 56 17 65 23 64 29 70 30 72 37 71 44 64 33 54 31 44 33 36 34 31 39 29 44Z" fill="#c99e5b"/>${C(41,49,3.8,'#3a6ea5')}${C(59,49,3.8,'#3a6ea5')}<path d="M43 59Q50 67 57 59Z" fill="#ff6b8b"/></svg>`;
+}
+function dadPC(x,y){
+ return`<g transform="translate(${x},${y})">${R(-110,55,230,16,'#b07d4f',4,'#6e4a2a',2.5)}${R(-100,71,14,115,'#8f6138')}${R(96,71,14,115,'#8f6138')}${R(52,102,40,82,'#2c3042',5,'#191b26',2)}<rect x="59" y="114" width="26" height="5" rx="2" fill="#00d2d3" class="a-gl"/>${R(-65,-58,136,90,'#25293a',8,'#141621',3)}${R(-57,-50,120,74,'#182a59',4)}<g clip-path="url(#pcc)">${R(-57,6,120,18,'#2ecc71')}${C(-32,-34,2,'#fff')}${C(34,-36,2,'#ffe066')}<g class="a-sc">${P('-28,-8 -14,-16 -14,0','#ff6b8b')}${R(-42,-12,16,9,'#48dbfb',3)}${C(10,-20,6,'#ffd32a')}${R(20,-5,14,10,'#ff9f43',2)}</g>${R(-50,-44,38,6,'#2ed573',3)}${R(26,-44,28,6,'#ff4757',3)}</g>${R(-12,32,26,18,'#3a3f58')}${R(-32,47,66,8,'#3a3f58',3)}${P('-50,55 32,55 40,66 -58,66','#3d435c')}${E(64,60,10,6,'#3d435c')}${R(-48,34,96,120,'#222738',24,'#121521',2.5)}${R(-34,42,68,22,'#ff5252',10)}<path d="M-56 142C-58 84-42 66 0 66 42 66 58 84 56 142Z" fill="#364228" stroke="#222b18" stroke-width="2.5"/><path d="M-18 68Q0 76 18 68" fill="none" stroke="#26301b" stroke-width="5"/>${R(-14,48,28,22,'#f2cbb4',8)}${C(-28,30,6.5,'#f2cbb4')}${C(28,30,6.5,'#f2cbb4')}${E(0,26,29,30,'#6f5844','#4f3d2e',2)}${E(0,18,25,20,'#7d644e')}${R(-8,152,16,32,'#222')}${Ln(-45,184,45,184,'#222',7)}</g>`;
+}
+function milaF(x,y,s=1){return`<g transform="translate(${x},${y}) scale(${s})">${R(-13,45,9,44,'#fde0cf',4)}${R(4,45,9,44,'#fde0cf',4)}${E(-9,90,9,5,'#ff6b8b')}${E(9,90,9,5,'#ff6b8b')}${P('-20,20 20,20 27,54 -27,54','#2d303d','#181a22',2)}<path d="M-24-38C-29-10-27 12-18 20H18C27 12 29-10 24-38Z" fill="#dfb368"/><path d="M-20-12C-24-12-28 2-25 14L-17 16V24H17V16L25 14C28 2 24-12 20-12Z" fill="#fff" stroke="#d9d1e6" stroke-width="2"/>${P('6,2 8,-2 10,1 12,-2 14,2','#f3c65f')}${E(0,-34,19,20,'#ffe6d6')}${C(-7,-34,2.8,'#3a6ea5')}${C(7,-34,2.8,'#3a6ea5')}<path d="M-6-24Q0-19 6-24" fill="none" stroke="#d96b82" stroke-width="2"/><path d="M-19-38C-17-56 17-56 19-38 12-47-12-47-19-38Z" fill="#ebd088"/><path d="M-14-49Q0-58 14-49" fill="none" stroke="#f09bb4" stroke-width="2.5"/>${P('-6,-52 0,-61 6,-52','#fff2b2','#e6a700',1)}</g>`;}
+function lizaF(x,y,s=1){return`<g transform="translate(${x},${y}) scale(${s})">${R(-15,48,12,58,'#4b6cb7',5)}${R(3,48,12,58,'#4b6cb7',5)}${E(-9,108,10,5,'#fff')}${E(9,108,10,5,'#fff')}<path d="M-26-42C-32-12-30 14-20 24H20C30 14 32-12 26-42Z" fill="#e5c07b"/><path d="M-25-10C-30 8-26 42-21 52H21C26 42 30 8 25-10Z" fill="#fff" stroke="#d7d0e3" stroke-width="2"/>${P('-9,-10 0,8 9,-10','#fde0cf')}<path d="M-7-8Q0 3 7-8" fill="none" stroke="#e5b84b" stroke-width="1.4"/>${E(0,-35,20,21,'#ffe6d7')}${C(-7,-36,2.7,'#3a6ea5')}${C(7,-36,2.7,'#3a6ea5')}<path d="M-6-26Q0-21 6-26" fill="none" stroke="#e06786" stroke-width="2.2"/><path d="M-20-38C-17-58 18-58 20-36 10-48-10-47-20-38Z" fill="#f2d99b"/></g>`;}
+function sashaF(x,y,s=1){return`<g transform="translate(${x},${y}) scale(${s})">${R(-18,48,14,60,'#34495e',5)}${R(4,48,14,60,'#34495e',5)}${E(-11,110,12,5,'#222')}${E(11,110,12,5,'#222')}<path d="M-32-12C-36 10-32 45-24 54H24C32 45 36 10 32-12Z" fill="#364228" stroke="#222b18" stroke-width="2"/>${E(0,-38,22,22,'#fce0ce')}<path d="M-21-42C-21-60 21-60 21-42 14-51-14-51-21-42Z" fill="#6f5844"/><path d="M-20-34C-19-20-10-16 0-16 10-16 19-20 20-34 15-26 8-22 0-22-8-22-15-26-20-34Z" fill="#8b7059" opacity=".4"/>${C(-8,-40,2.6,'#3f6a96')}${C(8,-40,2.6,'#3f6a96')}<path d="M-6-28Q0-24 6-28" fill="none" stroke="#b96d64" stroke-width="2"/></g>`;}
+function mishaS(x,y,s=1){return`<g transform="translate(${x},${y}) scale(${s})">${E(-14,24,11,6,'#4b7bec')}${E(14,24,11,6,'#4b7bec')}${R(-15,-4,30,28,'#ff9f43',10)}${R(-12,6,24,19,'#4b7bec',6)}<g transform="translate(14,2)"><g class="a-wv">${R(0,-4,16,8,'#ffe7d6',4)}</g></g>${C(0,-18,17,'#ffe7d6')}<path d="M-15-23C-14-36 14-36 15-23 8-30-8-30-15-23Z" fill="#c99e5b"/>${C(-6,-19,2.6,'#3a6ea5')}${C(6,-19,2.6,'#3a6ea5')}<path d="M-5-11Q0-6 5-11Z" fill="#ff6b8b"/></g>`;}
+
+// === 4. 64 UNIQUE CARTOON HIDDEN OBJECTS ===
+const IT={
+ teddy:['Плюшевый мишка','Плюшевий ведмедик','Plyšový medvedík',C(-8,-12,5,'#a86d3d')+C(8,-12,5,'#a86d3d')+C(0,-6,10,'#c4834d')+E(0,9,11,11,'#c4834d')+E(0,10,6,6,'#e8ba8b')+C(-3,-7,1.5,'#222')+C(3,-7,1.5,'#222')+C(0,-4,2,'#4a2811')],
+ sock:['Полосатый носок','Смугаста шкарпетка','Pruhovaná ponožka',`<path d="M-7-15H5V3C5 9 14 7 14 13 14 18 3 19-5 16-10 14-9 5-7-15Z" fill="#ff6b8b" stroke="#c0395b" stroke-width="1.5"/>`+R(-6,-11,11,3.5,'#fff')+R(-6,-4,11,3.5,'#ffe066')],
+ remote:['Пульт от ТВ','Пульт від ТБ','Ovládač',R(-7,-16,14,32,'#3a3f58',4,'#1e2233',1.5)+C(-3,-11,2,'#ff4d6d')+C(3,-11,1.5,'#4fd1c5')+R(-4,-4,8,4,'#8d99ae',1)+C(-3,5,1.6,'#fff')+C(3,5,1.6,'#fff')+C(-3,10,1.6,'#fff')+C(3,10,1.6,'#fff')],
+ car:['Красная машинка','Червона машинка','Červené autíčko',P('-16,4 -14,-4 -7,-11 7,-11 13,-3 17,4','#ff4757','#b32333',1.5)+R(-6,-8,12,6,'#a8e6ff',1.5)+C(-9,7,5,'#2f3542')+C(9,7,5,'#2f3542')+C(-9,7,2,'#ced6e0')+C(9,7,2,'#ced6e0')],
+ duck:['Уточка','Качечка','Kačička',E(1,6,13,9,'#ffd32a','#d9a100',1.5)+C(-7,-6,8,'#ffd32a','#d9a100',1.5)+P('-15,-6 -21,-3 -14,-1','#ff7f50')+C(-9,-8,1.7,'#222')],
+ bow:['Розовый бантик','Рожевий бантик','Ružová mašlička',`<path d="M0 0L-15-10C-18-2-18 5-15 10ZM0 0L15-10C18-2 18 5 15 10Z" fill="#ff7eb3" stroke="#d44583" stroke-width="1.4"/>`+C(0,0,4.5,'#ff4d94')],
+ apple:['Яблоко','Яблуко','Jablko',`<path d="M0-9C-12-13-16 4-9 13-4 17 0 13 0 13 0 13 4 17 9 13 16 4 12-13 0-9Z" fill="#7bed9f" stroke="#2ed573" stroke-width="1.5"/>`+Ln(0,-9,2,-16,'#6f4e37',2.2)+E(6,-14,5,2.5,'#2ed573')],
+ mug:['Жёлтая кружка','Жовта чашка','Žltý hrnček',`<path d="M8-6C16-6 16 8 8 8" fill="none" stroke="#e6a700" stroke-width="3.5"/>`+R(-11,-11,19,23,'#ffe066',4,'#d49b00',1.5)+C(-1,0,4,'#ff6b8b')],
+ honey:['Баночка мёда','Баночка меду','Pohár medu',R(-10,-7,20,21,'#ffbe0b',6,'#c88900',1.5)+R(-8,-13,16,6,'#ff595e',2)+R(-7,-1,14,9,'#fff7d6',2)],
+ cookie:['Печенье','Печиво','Sušienka',C(0,0,13,'#e0a96d','#a66e38',1.6)+C(-5,-4,2,'#4b2e19')+C(4,-5,2,'#4b2e19')+C(5,4,2,'#4b2e19')+C(-4,5,1.8,'#4b2e19')+C(0,0,1.6,'#4b2e19')],
+ whisk:['Венчик','Вінчик','Metlička',R(-2.5,4,5,14,'#ff7f50',2,'#b84a20',1.2)+E(0,-6,7,11,'none','#95a5a6',1.8)+E(0,-6,3.5,11,'none','#7f8c8d',1.4)],
+ spoon:['Деревянная ложка','Дерев\'яна ложка','Drevená lyžica',R(-2,-3,4,20,'#c68b59',2,'#8a5a32',1.2)+E(0,-9,6.5,9,'#d9a06c','#8a5a32',1.3)],
+ drum:['Барабанчик','Барабанчик','Bubienok',R(-13,-6,26,16,'#ff5252',3,'#b32424',1.5)+E(0,-6,13,4.5,'#fff3d6','#b32424',1.4)+`<polyline points="-12,9 -6,-1 0,9 6,-1 12,9" fill="none" stroke="#ffd32a" stroke-width="2"/>`],
+ puzzle:['Деталь пазла','Деталь пазла','Dielik puzzle',`<path d="M-11-11H-3C-3-16 3-16 3-11H11V-3C16-3 16 3 11 3V11H-11Z" fill="#9b5de5" stroke="#6a30b5" stroke-width="1.5"/>`],
+ rattle:['Погремушка','Брязкальце','Hrkálka',R(-2.5,1,5,15,'#4ecdc4',2.5)+C(0,-7,9.5,'#ff6b6b','#cc3d3d',1.5)+C(-3,-8,2,'#ffe66d')+C(3,-5,2,'#ffe66d')],
+ pacifier:['Пустышка','Пустушка','Cumlík',C(0,6,8,'none','#48dbfb',3)+E(0,-4,11,7,'#54a0ff','#2e86de',1.4)+C(0,-4,4,'#ffe066')],
+ dice:['Кубик','Кубик','Hracia kocka',R(-11,-11,22,22,'#fff',4,'#8395a7',1.8)+C(-5,-5,2,'#222')+C(5,-5,2,'#222')+C(0,0,2.2,'#ff4757')+C(-5,5,2,'#222')+C(5,5,2,'#222')],
+ crown:['Заколка-корона','Шпилька-корона','Sponka korunka',P('-13,8 -15,-7 -6,1 0,-11 6,1 15,-7 13,8','#ffd700','#c29500',1.5)+C(0,-11,2.2,'#ff6b8b')],
+ can:['Лейка','Лійка','Krhla',R(-10,-6,18,18,'#2ec4b6',3,'#168a7e',1.5)+`<path d="M-10-2C-17-2-17 9-10 9" fill="none" stroke="#168a7e" stroke-width="3"/>`+Ln(8,5,17,-6,'#2ec4b6',4)+C(18,-7,3,'#ffd166')],
+ hat:['Шляпка','Капелюшок','Klobúk',E(0,5,18,6.5,'#f6d38b','#c69842',1.5)+`<path d="M-10 4C-10-9 10-9 10 4Z" fill="#f6d38b" stroke="#c69842" stroke-width="1.5"/><path d="M-10 2Q0 5 10 2" fill="none" stroke="#ff6b8b" stroke-width="3.5"/>`],
+ bino:['Бинокль','Бінокль','Ďalekohľad',R(-14,-9,11,20,'#3d405b',3,'#222',1.4)+R(3,-9,11,20,'#3d405b',3,'#222',1.4)+R(-4,-4,8,7,'#5c6282')+C(-8.5,10,4,'#72efdd')+C(8.5,10,4,'#72efdd')],
+ shades:['Солнечные очки','Сонячні окуляри','Slnečné okuliare',R(-17,-6,14,11,'#222',4,'#ff6b8b',2)+R(3,-6,14,11,'#222',4,'#ff6b8b',2)+Ln(-3,-2,3,-2,'#ff6b8b',2.5)],
+ ladybug:['Божья коровка','Сонечко','Lienka',C(0,2,11,'#e63946','#8d1520',1.4)+C(0,-9,5,'#222')+Ln(0,-6,0,13,'#222',1.6)+C(-5,0,2,'#222')+C(5,0,2,'#222')+C(-4,7,1.8,'#222')+C(4,7,1.8,'#222')],
+ clip:['Прищепка','Прищіпка','Štipec',P('-14,-3 14,-6 14,-1 -14,-1','#f4a261','#b5651d',1.2)+P('-14,3 14,6 14,1 -14,1','#e9c46a','#b5651d',1.2)+C(0,0,2.5,'#7f8c8d')],
+ keys:['Ключи от машины','Ключі від машини','Kľúče od auta',C(-6,-7,6,'none','#ffd32a',3)+R(-1,-11,14,9,'#2f3542',2.5)+R(12,-8,7,3,'#ced6e0')+`<path d="M-9-1V13H-4V9H-6" fill="none" stroke="#d4af37" stroke-width="2.5"/>`],
+ umbrella:['Зонтик','Парасолька','Dáždnik',`<path d="M-16 0C-14-14 14-14 16 0Z" fill="#ff6b8b" stroke="#c43b5c" stroke-width="1.5"/>`+Ln(0,-11,0,13,'#5c4033',2.4)+`<path d="M0 13C0 17 6 17 6 13" fill="none" stroke="#5c4033" stroke-width="2.4"/>`],
+ scarf:['Тёплый шарф','Теплий шалік','Teplý šál',R(-14,-10,28,9,'#ff9f43',4,'#c46b14',1.4)+R(2,-4,9,19,'#ff9f43',3,'#c46b14',1.4)+Ln(-8,-10,-8,-1,'#fff',2.5)+Ln(2,6,11,6,'#fff',2.5)],
+ boot:['Сапожок Миши','Чобіток Міші','Miškova čižmička',`<path d="M-8-13H4V4L13 6C16 7 16 14 11 14H-9Z" fill="#4b7bec" stroke="#2651b5" stroke-width="1.5"/>`+R(-9,11,24,3.5,'#ffd32a',1.5)],
+ torch:['Фонарик','Ліхтарик','Baterka',R(-15,-5,20,10,'#ff5252',2.5,'#a62424',1.4)+P('5,-5 14,-9 14,9 5,5','#4b6584','#222',1.3)+R(13,-8,3,16,'#ffe066')],
+ comb:['Расчёска','Гребінець','Hrebeň',R(-16,-8,32,6,'#c56cf0',3,'#7d32a8',1.3)+`<path d="M-13-2V9M-8-2V9M-3-2V9M2-2V9M7-2V9M12-2V9" stroke="#c56cf0" stroke-width="2.3"/>`],
+ ball:['Мячик','М\'ячик','Loptička',C(0,0,13,'#fff','#444',1.4)+`<path d="M0-13A13 13 0 0 1 13 0H0Z" fill="#ff4757"/><path d="M0 13A13 13 0 0 1-13 0H0Z" fill="#1e90ff"/><path d="M0-13A13 13 0 0 0-13 0H0Z" fill="#ffd32a"/>`],
+ bucket:['Ведёрко','Відерце','Vedierko',P('-11,-6 11,-6 8,13 -8,13','#ff6b6b','#c0392b',1.5)+`<path d="M-10-6C-10-16 10-16 10-6" fill="none" stroke="#ffd32a" stroke-width="2.4"/>`+R(-12,-8,24,4,'#ff8787',2)],
+ shovel:['Лопатка','Лопатка','Lopatka',R(-2.5,-12,5,15,'#ffd32a',2,'#c29500',1.2)+P('-7,2 7,2 5,15 -5,15','#1dd1a1','#108a69',1.4)+C(0,-13,4,'none','#c29500',2.2)],
+ cap:['Кепка','Кепка','Šiltovka',`<path d="M-13 4C-13-10 10-10 11 4Z" fill="#ff9f43" stroke="#c46b14" stroke-width="1.5"/><path d="M4 2L19 5C17 9 6 8-13 5Z" fill="#ee5253" stroke="#a62424" stroke-width="1.3"/>`],
+ wrench:['Гаечный ключ','Гайковий ключ','Francúzsky kľúč',R(-12,-3,24,6,'#95a5a6',2,'#576574',1.3)+`<path d="M-15-7C-20-3-20 3-15 7L-10 3V-3Z" fill="#95a5a6" stroke="#576574" stroke-width="1.3"/>`+C(13,0,5,'#95a5a6','#576574',1.3)+C(13,0,2,'#fff')],
+ thermos:['Термос','Термос','Termoska',R(-8,-10,16,26,'#2ed573',3,'#1b8a48',1.5)+R(-7,-16,14,7,'#dfe4ea',2,'#576574',1.3)+R(-8,0,16,5,'#1b8a48')],
+ lock:['Замок','Замок','Visiaci zámok',`<path d="M-7-3V-10C-7-17 7-17 7-10V-3" fill="none" stroke="#95a5a6" stroke-width="3.5"/>`+R(-11,-3,22,17,'#f7b731',3,'#b57d0c',1.5)+C(0,4,2.5,'#2f3542')+R(-1,5,2,5,'#2f3542')],
+ magnet:['Магнит','Магніт','Magnet',`<path d="M-10 10V-3C-10-14 10-14 10-3V10H4V-3C4-7-4-7-4-3V10Z" fill="#eb3b5a" stroke="#9e1b33" stroke-width="1.4"/>`+R(-10,5,6,6,'#d1d8e0')+R(4,5,6,6,'#d1d8e0')],
+ rose:['Алая роза','Червона троянда','Červená ruža',Ln(0,0,0,17,'#20bf6b',2.6)+E(6,9,5,2.5,'#26de81')+C(0,-6,9,'#eb3b5a','#9e1b33',1.4)+`<path d="M-4-6C-4-10 4-10 4-5 4-2-2-1-3-4" fill="none" stroke="#ff9ff3" stroke-width="1.6"/>`],
+ scissors:['Ножницы','Ножиці','Nožnice',Ln(-12,-12,6,6,'#a5b1c2',3.2)+Ln(12,-12,-6,6,'#778ca3',3.2)+C(-8,10,5,'none','#ff5252',2.8)+C(8,10,5,'none','#ff5252',2.8)],
+ bell:['Колокольчик','Дзвіночок','Zvonček',`<path d="M0-13C-9-13-11 2-14 8H14C11 2 9-13 0-13Z" fill="#ffd32a" stroke="#b88900" stroke-width="1.5"/>`+C(0,11,3.5,'#e58e26')],
+ cupcake:['Кекс с кремом','Кекс із кремом','Košíček',P('-11,1 11,1 8,14 -8,14','#ff9ff3','#c44569',1.4)+`<path d="M-12 1C-14-7-6-11 0-12 6-11 14-7 12 1Z" fill="#fff5e6" stroke="#e1b12c" stroke-width="1.3"/>`+C(0,-13,3.5,'#ff4757')],
+ croissant:['Круассан','Круасан','Croissant',`<path d="M-15 6C-15-10 15-10 15 6 11 10 7 4 0 4-7 4-11 10-15 6Z" fill="#f3a653" stroke="#b5671b" stroke-width="1.5"/>`+Ln(-6,-4,-4,4,'#b5671b',1.4)+Ln(6,-4,4,4,'#b5671b',1.4)],
+ candle:['Свечка','Свічка','Sviečka',R(-4,-3,8,19,'#48dbfb',2,'#0abde3',1.3)+Ln(-4,4,4,7,'#fff',2)+`<path d="M0-15C4-10 4-5 0-4-4-5-4-10 0-15Z" fill="#ff9f43"/>`],
+ berry:['Клубника','Полуниця','Jahoda',`<path d="M0 14C-11 8-13-6-6-9-2-11 2-11 6-9 13-6 11 8 0 14Z" fill="#ff4757" stroke="#a61c2b" stroke-width="1.4"/>`+P('-7,-9 0,-14 7,-9 0,-6','#2ed573')+C(-4,-2,1.1,'#ffe066')+C(3,-1,1.1,'#ffe066')+C(0,5,1.1,'#ffe066')],
+ boat:['Кораблик','Кораблик','Loďka',P('-16,3 16,3 11,11 -11,11','#fff','#7f8c8d',1.5)+P('-8,3 0,-12 8,3','#ecf0f1','#7f8c8d',1.4)],
+ carrot:['Морковка','Морквинка','Mrkva',P('-8,-7 8,-7 0,16','#ff7f50','#c84b1d',1.4)+Ln(0,-7,-6,-15,'#2ed573',2.5)+Ln(0,-7,0,-16,'#2ed573',2.5)+Ln(0,-7,6,-15,'#2ed573',2.5)],
+ cheese:['Кусочек сыра','Шматочок сиру','Kúsok syra',P('-14,10 14,10 12,-6 -8,-11','#ffd32a','#cc9900',1.5)+C(-3,2,3,'#e5a900')+C(6,4,2.2,'#e5a900')+C(3,-4,2,'#e5a900')],
+ compass:['Компас','Компас','Kompas',C(0,0,13,'#f7b731','#a66e00',2)+C(0,0,9.5,'#fff8e1')+P('0,-8 3,0 0,8 -3,0','#eb3b5a')+P('0,0 3,0 0,8 -3,0','#3867d6')],
+ loupe:['Лупа','Лупа','Lupa',Ln(5,5,15,15,'#8d5524',4.5)+C(-3,-3,10,'rgba(168,230,255,.7)','#4b6584',2.8)],
+ scroll:['Карта-свиток','Карта-сувій','Mapa',R(-12,-11,24,22,'#f5deb3',2,'#a67c52',1.5)+R(-15,-14,30,5,'#deb887',2.5,'#8c6239',1.3)+R(-15,9,30,5,'#deb887',2.5,'#8c6239',1.3)+`<path d="M-7-4Q0 3 7-3" fill="none" stroke="#c0392b" stroke-width="1.6" stroke-dasharray="2 2"/>`],
+ shell:['Ракушка','Мушля','Mušľa',`<path d="M-14 4C-16-10 16-10 14 4L7 12H-7Z" fill="#ffd8be" stroke="#d48c6a" stroke-width="1.5"/>`+Ln(0,12,0,-7,'#d48c6a',1.4)+Ln(-3,12,-9,-4,'#d48c6a',1.4)+Ln(3,12,9,-4,'#d48c6a',1.4)],
+ starfish:['Морская звезда','Морська зірка','Morská hviezdica',P('0,-15 4,-5 15,-4 7,4 10,15 0,9 -10,15 -7,4 -15,-4 -4,-5','#ff7f50','#c0471c',1.5)+C(0,0,2.2,'#ffe066')],
+ camera:['Фотоаппарат','Фотоапарат','Fotoaparát',R(-15,-8,30,20,'#3a3f58',4,'#1e2233',1.5)+R(-7,-12,10,4,'#57606f',1.5)+C(0,2,6.5,'#70a1ff','#dfe4ea',2)+C(10,-4,2,'#ff4757')],
+ ticket:['Билет','Квиток','Lístok',R(-15,-9,30,18,'#ffd32a',3,'#c28e00',1.5)+C(-15,0,3.5,'#1e1b3a')+C(15,0,3.5,'#1e1b3a')+P('0,-5 1.8,-1 6,-1 2.5,1.5 3.8,5.5 0,3 -3.8,5.5 -2.5,1.5 -6,-1 -1.8,-1','#ff4757')],
+ popcorn:['Попкорн','Попкорн','Pukance',P('-10,-2 10,-2 8,14 -8,14','#fff','#c0392b',1.4)+Ln(-4,-2,-3,14,'#ff4757',3)+Ln(4,-2,3,14,'#ff4757',3)+C(-6,-5,4.5,'#fff5cc')+C(0,-7,5,'#ffeaa7')+C(6,-5,4.5,'#fff5cc')],
+ lollipop:['Леденец','Льодяник','Lízanka',Ln(0,2,0,17,'#fff',3)+C(0,-5,10.5,'#ff6b8b','#c0395b',1.4)+`<path d="M0-5m-6 0a6 6 0 1 1 12 0a4 4 0 1 1-8 0" fill="none" stroke="#fff" stroke-width="2.2"/>`],
+ lantern:['Фонарик-лампа','Ліхтарик-лампа','Lampášik',R(-9,-10,18,22,'#ffeaa7',4,'#d35400',2)+E(0,1,4.5,6.5,'#ff9f43')+R(-10,-12,20,4,'#d35400',1.5)+R(-10,10,20,4,'#d35400',1.5)],
+ basket:['Корзинка','Кошик','Piknikový košík',`<path d="M-11-2C-11-14 11-14 11-2" fill="none" stroke="#8d5524" stroke-width="2.8"/>`+R(-14,-2,28,15,'#d99b52',3,'#8d5524',1.5)+Ln(-14,5,14,5,'#8d5524',1.4)+R(-15,-4,30,4,'#ff6b8b',1.5)],
+ gift:['Подарок','Подарунок','Darček',R(-12,-6,24,20,'#ff5e8e',2.5,'#b3244f',1.5)+R(-3,-6,6,20,'#ffd32a')+R(-12,1,24,5,'#ffd32a')+C(-4,-9,3.5,'none','#ffd32a',2.5)+C(4,-9,3.5,'none','#ffd32a',2.5)],
+ photo:['Семейное фото','Сімейне фото','Rodinná fotka',R(-14,-11,28,22,'#f7b731',2.5,'#a66e00',1.8)+R(-10,-7,20,14,'#a8e6ff')+C(-5,-1,2.5,'#ffe6d6')+C(0,-2,2.7,'#ffe6d6')+C(5,-1,2.5,'#ffe6d6')+R(-9,2,18,5,'#2ed573')],
+ star:['Звёздочка','Зірочка','Hviezdička',P('0,-15 4.5,-5 15,-4 7,3 9.5,14 0,8.5 -9.5,14 -7,3 -15,-4 -4.5,-5','#ffd32a','#e59800',1.5)],
+ egg:['Яйцо','Яйце','Vajíčko',`<path d="M0-14C9-14 11 0 10 7 9 13 5 15 0 15-5 15-9 13-10 7-11 0-9-14 0-14Z" fill="#fff5dc" stroke="#d4b483" stroke-width="1.6"/>`+C(-3,-4,2,'#fff')],
+ anchor:['Якорь','Якір','Kotva',C(0,-11,3.5,'none','#4b6584',2.6)+Ln(0,-7,0,12,'#4b6584',3)+Ln(-8,-3,8,-3,'#4b6584',2.6)+`<path d="M-12 4C-11 14 11 14 12 4" fill="none" stroke="#4b6584" stroke-width="3.2"/>`]
+};
+
+// === 5. 15 LOCATIONS (STORY + DIALOGUES + RICH BACKGROUNDS + LOOPING ANIMATIONS + 90 OBJECTS) ===
+const SC=[
+ // 1. APARTMENT LIVING ROOM (ALL 4 FAMILY MEMBERS + DAD FROM BEHIND AT PC!)
+ {e:'🛋️',t:['1. Семейная гостиная','1. Сімейна вітальня','1. Rodinná obývačka'],
+  d:[
+   ['liza','Доброе утро! Сегодня наш Большой семейный праздник и пикник! Только посмотри, какой беспорядок устроил Миша…','Доброго ранку! Сьогодні наше Велике сімейне свято та пікнік! Тільки подивись, який безлад влаштував Міша…','Dobré ráno! Dnes je naša Veľká rodinná oslava a piknik! Pozri sa však, aký neporiadok narobil Miško…'],
+   ['misha','Хи-хи! Пиратский клад! Ту-ту!','Хі-хі! Піратський скарб! Ту-ту!','Hi-hi! Pirátsky poklad! Tu-tú!'],
+   ['sasha','Я сейчас допройду уровень на компьютере и пойду заводить машину! Мила, поможешь маме прибраться?','Я зараз допройду рівень на комп’ютері й піду заводити машину! Міло, допоможеш мамі прибрати?','Len dokončím úroveň na počítači a pôjdem naštartovať auto! Mila, pomôžeš mame upratať?'],
+   ['mila','Конечно! Найду все вещи за пару минут — настоящий квест!','Звісно! Знайду всі речі за пару хвилин — справжній квест!','Samozrejme! Nájdem všetko za pár minút — ozajstná detektívka!']
+  ],
+  o:['Мама Лиза: «Какая чистота, Мила! Теперь беги на кухню — поможешь собрать вкусняшки!»','Мама Ліза: «Яка чистота, Міло! Тепер біжи на кухню — допоможеш зібрати смаколики!»','Mama Liza: „Aká čistota, Mila! Teraz poď do kuchyne — pomôžeš mi zbaliť maškrty!“'],
+  it:[['teddy',305,495,1,-10],['car',590,625,.95,5],['remote',185,436,.82,30],['sock',740,612,.84,-25],['duck',122,292,.78,8],['bow',470,210,.7,-18]],
+  bg:()=>`<defs><clipPath id="pcc">${R(-57,-50,120,74,'#000',4)}</clipPath></defs>
+   ${R(0,0,1200,470,'#fff3d6')}${R(0,470,1200,250,'#cf945a')}${R(0,462,1200,10,'#f3e5cc')}
+   ${R(400,95,270,210,'#8fd9ff',10,'#fff',9)}${C(465,148,24,'#ffe66d')}<g class="a-cl">${E(565,155,34,16,'#fff')}${E(590,150,22,14,'#fff')}</g>${Ln(535,95,535,305,'#fff',6)}${Ln(400,200,670,200,'#fff',6)}
+   ${P('384,88 432,88 400,320 378,320','#ff9eb5','#d96b88',2)}${P('686,88 638,88 670,320 692,320','#ff9eb5','#d96b88',2)}
+   ${R(594,0,12,36,'#6d597a')}<g transform="translate(600,40)"><g class="a-sf">${E(-68,0,60,11,'#c89666','#8a5a32',2)}${E(68,0,60,11,'#c89666','#8a5a32',2)}${C(0,0,14,'#ffe066','#c29500',2)}</g></g>
+   ${R(48,135,165,335,'#a66f3f',8,'#6b4220',3)}${R(62,155,137,65,'#7d502b')}${R(62,235,137,68,'#7d502b')}${R(62,318,137,68,'#7d502b')}${R(62,400,137,58,'#7d502b')}
+   ${R(68,168,18,52,'#ff6b8b',2)}${R(88,164,16,56,'#4ecdc4',2)}${R(106,174,20,46,'#ffd32a',2)}${R(70,330,18,56,'#9b5de5',2)}
+   ${C(775,170,40,'#fff9eb','#a66f3f',6)}${Ln(775,170,775,146,'#222',3.5)}${Ln(775,170,795,176,'#ff5252',2.5)}<g transform="translate(775,210)"><g class="a-pd">${Ln(0,0,0,46,'#c8963e',3)}${C(0,50,10,'#ffd32a','#b38600',2)}</g></g>
+   ${R(152,368,330,106,'#5e81ac',24,'#3b5375',3)}${R(132,405,42,88,'#4c6b94',16,'#3b5375',3)}${R(460,405,42,88,'#4c6b94',16,'#3b5375',3)}${R(166,438,300,56,'#7296c2',16,'#3b5375',2.5)}
+   ${R(215,395,58,46,'#ffd32a',12)}${R(380,396,56,44,'#ff7eb3',12)}
+   ${E(520,598,295,74,'#ffeaa7','#f0932b',6)}${E(520,598,245,52,'#ffbe76')}
+   ${R(455,618,26,26,'#ff5252',4)}${R(486,625,24,24,'#48dbfb',4)}${R(468,594,24,24,'#2ed573',4)}
+   ${R(200,538,180,16,'#c68b59',6,'#7d4f28',2.5)}${R(218,554,12,52,'#8d5524')}${R(350,554,12,52,'#8d5524')}
+   ${P('710,480 760,480 752,535 718,535','#e17055','#9e3d24',2.5)}${E(702,415,22,12,'#2ed573')}${E(766,415,22,12,'#26de81')}${E(735,395,20,28,'#20bf6b')}
+   ${lizaF(275,378,1.04)}${milaF(390,408,.96)}${mishaS(528,560,1.08)}${dadPC(985,385)}`
+ },
+
+ // 2. KITCHEN (HELP MOM LIZA + BOILING KETTLE)
+ {e:'🫖',t:['2. Уютная кухня','2. Затишна кухня','2. Útulná kuchyňa'],
+  d:[
+   ['liza','Чайник уже кипит! Я готовлю бутерброды и печенье на пикник. Мила, найдёшь нужные штучки на кухне?','Чайник уже кипить! Я готую бутерброди та печиво на пікнік. Міло, знайдеш потрібні речі на кухні?','Kanvica už vrie! Chystám chlebíčky a sušienky na piknik. Mila, nájdeš mi potrebné veci v kuchyni?'],
+   ['mila','С радостью, мамочка! Мои глаза-локаторы готовы!','Із радістю, матусю! Мої очі-локатори готові!','S radosťou, mami! Moje detektívne oči sú pripravené!']
+  ],
+  o:['Мама Лиза: «Спасибо, солнышко! Теперь загляни в детскую — Миша там что-то прятал!»','Мама Ліза: «Дякую, сонечко! Тепер зазирни в дитячу — Міша там щось ховав!»','Mama Liza: „Ďakujem, slniečko! Teraz nakukni do detskej izby — Miško tam niečo schovával!“'],
+  it:[['apple',565,495,1,-10],['mug',985,342,.95,4],['honey',265,245,.9,0],['cookie',715,522,.82,22],['whisk',120,365,.85,-35],['spoon',842,235,.78,70]],
+  bg:()=>`${R(0,0,1200,480,'#fff7e6')}${R(0,480,1200,240,'#fce4c4')}${R(0,275,1200,105,'#d4f3ef')}
+   ${R(55,75,320,185,'#74c69d',10,'#40916c',3)}${R(225,95,130,145,'#fff3d6',6)}${Ln(225,170,355,170,'#c89f5d',4)}
+   ${R(770,75,350,185,'#74c69d',10,'#40916c',3)}${R(790,205,310,45,'#fff3d6',4)}
+   ${R(440,70,265,190,'#8fd9ff',10,'#fff',9)}<g class="a-cl">${E(540,130,34,15,'#fff')}</g><path d="M440 260Q520 215 705 260Z" fill="#52b788"/>
+   ${R(35,370,1130,165,'#52b788',8,'#2d6a4f',3)}${R(25,356,1150,22,'#f5deb3',6,'#b5835a',2.5)}
+   ${R(1030,95,145,440,'#edf6f9',14,'#9ec1cf',3)}${Ln(1030,260,1175,260,'#9ec1cf',3)}
+   ${R(520,378,180,156,'#fff',6,'#7f8c8d',3)}${R(545,425,130,82,'#34495e',6,'#95a5a6',4)}
+   <g transform="translate(615,330)"><path d="M-24 26C-28 0-18-20 0-20 18-20 28 0 24 26Z" fill="#ff5252" stroke="#a61c2b" stroke-width="2.5"/><path d="M-16-16C-16-32 16-32 16-16" fill="none" stroke="#2f3542" stroke-width="4"/>${P('22,6 38,-10 32,-16 18,-2','#ff5252')}<g transform="translate(38,-18)"><circle r="8" fill="#fff" class="a-st"/><circle cx="6" cy="-5" r="10" fill="#fff" class="a-st2"/></g></g>
+   <g transform="translate(535,342)">${R(-24,-12,48,28,'#54a0ff',5,'#2e86de',2)}<g class="a-bb">${R(-26,-18,52,7,'#2e86de',3)}</g></g>
+   ${lizaF(245,425,1.08)}${E(580,575,235,72,'#e6b073','#9e642b',4)}${E(580,568,195,50,'#fff5e6','#ff9eb5',3)}`
+ },
+
+ // 3. KIDS' ROOM
+ {e:'🧸',t:['3. Детская комната','3. Дитяча кімната','3. Detská izba'],
+  d:[
+   ['mila','Миша, куда ты спрятал мою любимую заколку-корону и игрушки для дороги?','Мішо, куди ти сховав мою улюблену шпильку-корону й іграшки для дороги?','Miško, kam si ukryl moju obľúbenú sponku korunku a hračky na cestu?'],
+   ['misha','Секрет! Ищи-ищи, Мила!','Секрет! Шукай-шукай, Міло!','Tajomstvo! Hľadaj, Mila!']
+  ],
+  o:['Мила: «Всё нашла! Папа говорит, бинокль и шляпка остались на балконе — бегу туда!»','Міла: «Усе знайшла! Тато каже, бінокль і капелюшок залишилися на балконі — біжу туди!»','Mila: „Všetko mám! Ocko hovorí, že ďalekohľad a klobúk sú na balkóne — bežím tam!“'],
+  it:[['drum',455,605,1,-6],['puzzle',725,565,.95,22],['rattle',930,435,.88,-30],['pacifier',262,485,.82,18],['dice',612,475,.78,14],['crown',172,258,.75,-16]],
+  bg:()=>`${R(0,0,1200,490,'#f3e8ff')}${R(0,490,1200,230,'#f5d0a9')}
+   <path d="M430 340A170 170 0 0 1 770 340" fill="none" stroke="#ff7eb3" stroke-width="18"/><path d="M450 340A150 150 0 0 1 750 340" fill="none" stroke="#ffd32a" stroke-width="18"/><path d="M470 340A130 130 0 0 1 730 340" fill="none" stroke="#48dbfb" stroke-width="18"/>
+   ${R(65,340,320,170,'#ff9eb5',18,'#d45276',3)}${R(85,365,280,115,'#fff0f5',12)}${R(95,375,90,55,'#ffe066',14)}${R(185,370,180,110,'#c56cf0',8)}
+   ${R(90,265,220,14,'#fff',5,'#d9c2f0',2)}${R(485,425,210,105,'#ffb84d',12,'#c97a16',3)}${R(475,405,230,26,'#ffd32a',8,'#c97a16',3)}
+   ${R(820,345,290,175,'#a2d2ff',14,'#4a89dc',3)}${R(836,365,258,115,'#e6f4ff')}
+   <path d="M965 345V215Q965 190 925 190" fill="none" stroke="#ff7eb3" stroke-width="5"/><g transform="translate(925,215)"><g class="a-sw">${Ln(-55,0,55,0,'#ffd32a',4)}${C(-45,38,11,'#ff6b8b')}${C(0,46,12,'#ffd32a')}${C(45,38,11,'#2ec4b6')}</g></g>
+   <g transform="translate(1080,255)" class="a-gl">${C(0,0,26,'#ffe066')}</g>
+   ${Ln(250,670,950,670,'#8d5524',8)}<g transform="translate(520,635)" class="a-xm">${R(0,0,54,28,'#ff4757',6)}${R(60,6,44,22,'#48dbfb',4)}${C(14,30,8,'#222')}${C(42,30,8,'#222')}${C(72,30,7,'#222')}${C(94,30,7,'#222')}</g>
+   ${R(340,540,480,110,'#a8e6cf',22,'#56ab91',4)}${mishaS(600,565,1)}`
+ },
+
+ // 4. SUNNY BALCONY
+ {e:'🌻',t:['4. Солнечный балкон','4. Сонячний балкон','4. Slnečný balkón'],
+  d:[
+   ['sasha','Мила, глянь на балконе среди цветов — там сушились шляпка и наш бинокль!','Міло, глянь на балконі серед квітів — там сушилися капелюшок і наш бінокль!','Mila, pozri na balkón medzi kvety — sušil sa tam klobúk a náš ďalekohľad!'],
+   ['mila','Какой тёплый ветерок! И бабочка прилетела! Сейчас всё соберу!','Який теплий вітерець! І метелик прилетів! Зараз усе зберу!','Aký príjemný vetrík! A priletel aj motýlik! Hneď všetko pozbieram!']
+  ],
+  o:['Мила: «Отлично, всё со мной! Все уже ждут в прихожей — пора обуваться!»','Міла: «Чудово, усе зі мною! Усі вже чекають у передпокої — час взуватися!»','Mila: „Super, všetko mám! Všetci už čakajú v predsieni — je čas obuť sa!“'],
+  it:[['can',225,565,1.05,-8],['hat',735,490,1,10],['bino',965,545,.9,-14],['shades',465,425,.85,6],['clip',598,168,.8,-8],['ladybug',136,356,.75,30]],
+  bg:()=>`${R(0,0,1200,440,'#8fd9ff')}${C(1020,105,50,'#ffe66d')}<g class="a-cl">${E(260,110,60,24,'#fff')}${E(310,104,42,22,'#fff')}</g>
+   ${R(110,250,90,170,'#a2d2ff')}${R(215,210,110,210,'#90c2f0')}${R(820,235,125,185,'#90c2f0')}${R(970,270,110,150,'#a2d2ff')}
+   <path d="M80 155Q600 185 1120 155" fill="none" stroke="#8d99ae" stroke-width="3"/>
+   <g transform="translate(360,172)"><g class="a-sw">${R(-32,0,64,72,'#ff9eb5',6,'#d45276',2)}</g></g>
+   <g transform="translate(760,170)"><g class="a-sw">${R(-36,0,72,65,'#ffe066',6,'#d49b00',2)}</g></g>
+   ${R(0,435,1200,285,'#e8c39e')}${R(0,340,1200,16,'#fff',0,'#b0bec5',2)}
+   ${R(70,360,240,58,'#d97757',8,'#994228',3)}${C(120,345,26,'#2ed573')}${C(180,338,28,'#26de81')}${C(245,345,26,'#20bf6b')}${C(180,332,11,'#ffd32a')}${C(250,336,10,'#ff6b8b')}
+   <g transform="translate(185,0)"><g class="a-sw">${Ln(0,0,0,85,'#8d5524',3)}${P('-28,85 28,85 20,125 -20,125','#e17055')}${C(0,72,22,'#20bf6b')}</g></g>
+   ${R(650,420,175,165,'#d4a373',28,'#8c5a32',3)}${R(672,475,130,55,'#48dbfb',14)}${E(465,445,105,34,'#fff5e6','#d4a373',4)}${R(456,478,18,125,'#a67c52')}
+   ${P('905,530 1015,530 998,630 922,630','#e17055','#9e3d24',3)}${Ln(960,530,960,415,'#20bf6b',8)}${C(960,395,32,'#ffd32a')}${C(960,395,16,'#6f4e37')}
+   <g transform="translate(520,255)" class="a-fl">${E(-12,-5,12,9,'#ff6b8b')}${E(12,-5,12,9,'#ff6b8b')}${E(-9,7,9,7,'#ffd32a')}${E(9,7,9,7,'#ffd32a')}${R(-2,-10,4,20,'#222',2)}</g>`
+ },
+
+ // 5. HALLWAY
+ {e:'🔑',t:['5. Прихожая','5. Передпокій','5. Predsieň'],
+  d:[
+   ['sasha','Все готовы, но куда делись ключи от машины, зонтик и второй сапожок Миши?','Усі готові, але куди поділися ключі від машини, парасолька і другий чобіток Міші?','Všetci sme hotoví, ale kam sa podeli kľúče od auta, dáždnik a Miškova druhá čižmička?'],
+   ['mila','Я знаю все тайники в прихожей — минуточку!','Я знаю всі схованки в передпокої — хвилиночку!','Poznám všetky skrýše v predsieni — chvíľočku!']
+  ],
+  o:['Папа Саша: «Ключи нашлись! Выходим во двор! Ой, Миша уже бежит к песочнице!»','Тато Саша: «Ключі знайшлися! Виходимо у двір! Ой, Міша вже біжить до пісочниці!»','Ocko Saša: „Kľúče sa našli! Ideme na dvor! Jéj, Miško už uteká na pieskovisko!“'],
+  it:[['umbrella',155,520,1.1,-14],['boot',620,610,.95,8],['scarf',455,295,.95,-6],['keys',845,432,.85,22],['comb',772,392,.78,36],['torch',305,595,.78,-26]],
+  bg:()=>`${R(0,0,1200,480,'#e8f1f5')}${R(0,480,1200,240,'#c7956d')}
+   ${R(65,105,215,390,'#8d5524',8,'#522f10',5)}${R(95,140,155,145,'#a66832',6)}${R(95,310,155,145,'#a66832',6)}${C(248,300,11,'#ffd32a')}
+   ${R(355,145,320,35,'#a67c52',6)}<g transform="translate(415,180)"><g class="a-sw">${P('-24,0 24,0 34,155 -34,155','#48dbfb','#0984e3',2)}</g></g><g transform="translate(565,180)"><g class="a-sw">${P('-22,0 22,0 30,140 -30,140','#ff9eb5','#d45276',2)}</g></g>
+   ${R(340,455,350,115,'#e0b589',12,'#8d5524',3)}${R(340,445,350,28,'#ff7eb3',10)}
+   ${E(890,240,95,125,'#dff9fb','#f7b731',10)}${R(750,415,280,150,'#fff',8,'#b2bec3',3)}${R(740,405,300,20,'#deb887',6)}
+   <g transform="translate(600,0)"><g class="a-sw">${Ln(0,0,0,75,'#444',4)}<path d="M-48 110C-40 65 40 65 48 110Z" fill="#ffe066"/>${C(0,112,14,'#fff9c4')}</g></g>
+   <g transform="translate(760,645)" class="a-xm">${E(0,0,46,16,'#2f3542')}${E(0,-3,34,10,'#57606f')}<circle cy="-3" r="5" fill="#2ed573" class="a-gl"/></g>
+   ${R(85,545,190,82,'#d9a06c',10,'#8d5524',4)}${sashaF(1095,445,1.04)}`
+ },
+
+ // 6. PLAYGROUND
+ {e:'🛝',t:['6. Двор и площадка','6. Двір і майданчик','6. Ihrisko na dvore'],
+  d:[
+   ['misha','Качели! Песок! Вжух!','Гойдалка! Пісок! Вжух!','Hojdačka! Piesok! Fíha!'],
+   ['liza','Из рюкзачка Миши высыпались игрушки прямо на площадку! Мила, соберёшь их, пока папа открывает гараж?','Із рюкзачка Міші висипалися іграшки просто на майданчик! Міло, збереш їх, поки тато відкриває гараж?','Z Miškovho batôžka sa vysypali hračky rovno na ihrisko! Mila, pozbieraš ich, kým ocko otvorí garáž?']
+  ],
+  o:['Мила: «Готово! Бежим к папе в гараж — поможем загрузить багажник!»','Міла: «Готово! Біжімо до тата в гараж — допоможемо завантажити багажник!»','Mila: „Hotovo! Poďme za ockom do garáže — pomôžeme naložiť kufor!“'],
+  it:[['ball',265,595,1.05,12],['bucket',655,565,1,-6],['shovel',775,610,.9,42],['cap',960,460,.9,-14],['duck',165,495,.82,12],['bow',452,330,.75,-15]],
+  bg:()=>`${R(0,0,1200,380,'#70d6ff')}${C(170,95,44,'#ffe66d')}<g class="a-cl">${E(460,95,60,24,'#fff')}${E(940,115,52,22,'#fff')}</g>
+   ${R(40,155,310,230,'#ffd8be',8,'#d48c6a',3)}${R(70,185,60,52,'#a8e6ff',4)}${R(162,185,60,52,'#a8e6ff',4)}${R(254,185,60,52,'#a8e6ff',4)}
+   ${R(0,370,1200,350,'#7bed9f')}${R(1030,290,32,120,'#8d5524')}${C(1046,255,70,'#2ed573')}${C(1005,280,46,'#20bf6b')}
+   ${R(365,300,80,185,'#ff9f43',0,'#c46b14',3)}${P('345,305 405,245 465,305','#ff5252','#a61c2b',3)}<path d="M445 350C505 350 515 475 595 495L560 515C485 495 475 375 445 375Z" fill="#ffd32a" stroke="#c29500" stroke-width="3"/>
+   ${Ln(760,240,1000,240,'#ff6b8b',10)}${Ln(775,240,735,480,'#ff6b8b',9)}${Ln(985,240,1025,480,'#ff6b8b',9)}
+   <g transform="translate(880,242)"><g class="a-pd">${Ln(-26,0,-26,165,'#57606f',3)}${Ln(26,0,26,165,'#57606f',3)}${R(-36,160,72,14,'#48dbfb',5)}</g></g>
+   ${P('520,540 865,540 905,655 480,655','#f7d794','#b88d3d',10)}${R(90,455,185,24,'#c68b59',5)}${R(90,492,185,22,'#d9a06c',5)}
+   ${Ln(340,535,340,610,'#7d4f28',4)}<g transform="translate(340,535)"><g class="a-sm">${P('0,0 -22,-18 0,-22','#ff5252')}${P('0,0 18,-22 22,0','#ffd32a')}${P('0,0 22,18 0,22','#2ec4b6')}${P('0,0 -18,22 -22,0','#54a0ff')}</g></g>
+   ${milaF(310,445,.9)}`
+ },
+
+ // 7. GARAGE
+ {e:'🚗',t:['7. Семейный гараж','7. Сімейний гараж','7. Rodinná garáž'],
+  d:[
+   ['sasha','Машина готова, осталось найти термос и инструменты про запас! Поможешь папе, Мила?','Машина готова, залишилося знайти термос і інструменти про запас! Допоможеш татові, Міло?','Auto je pripravené, zostáva nájsť termosku a náradie do rezervy! Pomôžeš ockovi, Mila?'],
+   ['mila','Конечно, пап! Сейчас всё найду на твоих полочках!','Звісно, тату! Зараз усе знайду на твоїх поличках!','Jasné, ocko! Hneď všetko nájdem na tvojich poličkách!']
+  ],
+  o:['Папа Саша: «Отлично! Выезжаем в город — сначала заедем в цветочную лавку для мамы!»','Тато Саша: «Чудово! Вирушаємо в місто — спершу заїдемо до квіткової крамниці для мами!»','Ocko Saša: „Výborne! Vyrážame do mesta — najprv zájdeme do kvetinárstva pre mamu!“'],
+  it:[['thermos',265,365,1,0],['wrench',145,232,.9,42],['torch',368,568,.88,20],['lock',1062,280,.82,8],['magnet',762,235,.78,-30],['keys',948,435,.75,18]],
+  bg:()=>`${R(0,0,1200,495,'#dfe4ea')}${R(0,495,1200,225,'#95a5a6')}
+   ${R(65,135,260,190,'#d9a06c',8,'#8d5524',4)}${R(45,375,320,165,'#c0392b',6,'#7f1d1d',3)}${R(38,362,334,22,'#a67c52',4)}
+   ${R(860,155,290,350,'#57606f',6,'#2f3542',3)}${R(874,210,262,12,'#a4b0be')}${R(874,310,262,12,'#a4b0be')}${R(874,425,262,12,'#a4b0be')}${R(910,165,75,45,'#f7b731',4)}${R(1005,345,90,80,'#4b7bec',6)}
+   ${C(760,140,46,'#2f3542','#747d8c',5)}<g transform="translate(760,140)"><g class="a-sf">${E(0,-22,9,18,'#ced6e0')}${E(0,22,9,18,'#ced6e0')}${E(-22,0,18,9,'#ced6e0')}${E(22,0,18,9,'#ced6e0')}${C(0,0,9,'#ff6b8b')}</g></g>
+   <g transform="translate(555,0)"><g class="a-sw">${Ln(0,0,0,90,'#2f3542',4)}${P('-40,120 40,120 22,88 -22,88','#2ed573','#1b8a48',3)}<circle cy="124" r="14" fill="#fff9c4" class="a-gl"/></g></g>
+   <g transform="translate(600,455)">${P('-195,35 -175,-30 -105,-88 95,-88 165,-28 195,35','#48dbfb','#0984e3',4)}${P('-92,-74 -12,-74 -12,-22 -145,-22','#dff9fb')}${P('8,-74 86,-74 138,-22 8,-22','#dff9fb')}${R(-205,25,410,44,'#0abde3',14,'#0984e3',3)}<circle cx="-175" cy="40" r="13" fill="#ffe66d" class="a-gl"/><circle cx="175" cy="40" r="13" fill="#ff5252" class="a-gl"/>${C(-122,70,42,'#2f3542')}${C(-122,70,20,'#ced6e0')}${C(122,70,42,'#2f3542')}${C(122,70,20,'#ced6e0')}</g>
+   ${E(140,605,68,24,'#2f3542')}${E(140,580,68,24,'#3a3f58')}`
+ },
+
+ // 8. FLOWER SHOP
+ {e:'💐',t:['8. Цветочная лавка','8. Квіткова крамниця','8. Kvetinárstvo'],
+  d:[
+   ['liza','Какой чудесный аромат! Хочу взять яркий букет на праздничный стол. Мила, поможешь отыскать нужные мелочи среди цветов?','Який чудовий аромат! Хочу взяти яскравий букет на святковий стіл. Міло, допоможеш знайти потрібні дрібнички серед квітів?','Aká nádherná vôňa! Chcem kyticu na slávnostný stôl. Mila, pomôžeš mi nájsť potrebné drobnosti medzi kvetmi?'],
+   ['mila','Ой, тут даже весёлая пчёлка летает! Начинаю поиск!','Ой, тут навіть весела бджілка літає! Починаю пошук!','Jéj, lieta tu aj veselá včielka! Začínam hľadať!']
+  ],
+  o:['Мама Лиза: «Букет просто сказочный! А по соседству пахнет свежей выпечкой — заглянем в пекарню за тортом!»','Мама Ліза: «Букет просто казковий! А поруч пахне свіжою випічкою — зазирнемо в пекарню по торт!»','Mama Liza: „Kytica je rozprávková! A vedľa vonia čerstvé pečivo — zájdeme do pekárne po tortu!“'],
+  it:[['rose',495,430,1,-12],['can',205,565,.95,6],['scissors',865,455,.88,35],['bell',635,160,.82,-8],['bow',995,335,.78,18],['ladybug',330,365,.72,-22]],
+  bg:()=>`${R(0,0,1200,480,'#fff0f6')}${R(0,480,1200,240,'#e8d5c4')}
+   ${R(80,115,310,275,'#c7ecee',10,'#fff',8)}${R(810,115,310,275,'#c7ecee',10,'#fff',8)}
+   ${R(45,355,380,26,'#d9a06c',6)}${R(775,355,380,26,'#d9a06c',6)}
+   ${[120,200,280,350,840,930,1020,1100].map((x,i)=>P(`${x-20},355 ${x+20},355 ${x+14},315 ${x-14},315`,'#e17055')+C(x,295,22,i%2?'#ff6b8b':'#ffd32a')+C(x,295,8,'#fff')).join('')}
+   ${R(420,425,410,165,'#74c69d',12,'#40916c',4)}${R(405,408,440,26,'#f5deb3',8,'#b5835a',3)}
+   <g transform="translate(635,0)"><g class="a-sw">${Ln(0,0,0,75,'#8d5524',4)}${R(-75,75,150,55,'#ffe066',12,'#d49b00',3)}${C(-45,102,12,'#ff6b8b')}${C(45,102,12,'#ff6b8b')}</g></g>
+   <g transform="translate(490,235)" class="a-fl">${E(0,0,16,11,'#ffd32a','#222',2)}${Ln(-4,-10,-4,10,'#222',3)}${Ln(4,-10,4,10,'#222',3)}${E(-5,-12,8,5,'#dff9fb')}${E(5,-12,8,5,'#dff9fb')}</g>
+   ${lizaF(160,445,1.04)}`
+ },
+
+ // 9. SWEET BAKERY
+ {e:'🧁',t:['9. Сладкая пекарня','9. Солодка пекарня','9. Voňavá pekáreň'],
+  d:[
+   ['mila','Ммм, как вкусно пахнет ванилью и клубникой! Наш праздничный торт уже почти готов!','Ммм, як смачно пахне ваніллю й полуницею! Наш святковий торт уже майже готовий!','Mmm, ako krásne vonia vanilka a jahody! Naša slávnostná torta je už takmer hotová!'],
+   ['liza','Поможем пекарю найти свечку, ягоды и вкусняшки для украшения!','Допоможемо пекарю знайти свічку, ягоди та смаколики для прикраси!','Pomôžme pekárovi nájsť sviečku, jahody a dobroty na ozdobu!']
+  ],
+  o:['Мила: «Торт в коробочке! Теперь прогуляемся через городской парк к пруду с уточками!»','Міла: «Торт у коробочці! Тепер прогуляємося через міський парк до ставка з качечками!»','Mila: „Torta je v krabici! Teraz sa prejdeme cez mestský park k jazierku s kačkami!“'],
+  it:[['cupcake',455,442,1,0],['croissant',775,455,.95,-10],['cookie',225,520,.9,16],['candle',980,260,.85,-8],['berry',615,355,.8,12],['whisk',145,255,.78,-42]],
+  bg:()=>`${R(0,0,1200,480,'#fff4e6')}${R(0,480,1200,240,'#f3d5b5')}
+   ${R(0,0,1200,82,'#ff8fab')}${Array.from({length:12},(_,i)=>R(i*100,0,50,82,'#fff')).join('')}
+   ${R(70,130,310,245,'#d4a373',8,'#8d5524',3)}${Ln(70,210,380,210,'#8d5524',5)}${Ln(70,295,380,295,'#8d5524',5)}
+   ${E(160,192,42,20,'#e6a756','#a6691e',2)}<g transform="translate(160,168)"><circle r="7" fill="#fff" class="a-st"/><circle cx="8" cy="-4" r="9" fill="#fff" class="a-st2"/></g>
+   ${E(285,192,42,20,'#e6a756','#a6691e',2)}
+   ${R(820,130,310,245,'#d4a373',8,'#8d5524',3)}${Ln(820,210,1130,210,'#8d5524',5)}${Ln(820,295,1130,295,'#8d5524',5)}
+   ${R(360,395,530,190,'#ffcad4',14,'#d88c9a',4)}${R(385,415,480,105,'#e8f8ff',10,'#a2d2ff',3)}
+   <g transform="translate(620,340)"><g class="a-bb">${R(-52,0,104,45,'#fff0f5',8,'#ff6b8b',3)}${R(-36,-32,72,34,'#ffe066',8,'#e5a900',3)}${C(0,-42,8,'#ff4757')}</g></g>
+   ${R(450,150,310,85,'#fff9eb',14,'#ff6b8b',4)}<circle cx="485" cy="192" r="14" fill="#ff9f43" class="a-gl"/><circle cx="725" cy="192" r="14" fill="#ff9f43" class="a-gl"/>
+   ${milaF(1045,455,.98)}`
+ },
+
+ // 10. CITY PARK & DUCK POND
+ {e:'🦆',t:['10. Парк у пруда','10. Парк біля ставка','10. Park pri jazierku'],
+  d:[
+   ['misha','Кря-кря! Кораблик уплыл!','Кря-кря! Кораблик поплив!','Kač-kač! Loďka odplávala!'],
+   ['mila','Не расстраивайся, Мишенька! Утки просто расплескали воду — сейчас найдём и твой кораблик, и все остальные вещи на берегу!','Не засмучуйся, Мішенько! Качки просто розхлюпали воду — зараз знайдемо і твій кораблик, і всі інші речі на березі!','Nesmúť, Miško! Kačky len vyšpliechali vodu — hneď nájdeme tvoju loďku aj ostatné veci na brehu!']
+  ],
+  o:['Мила: «Ура, кораблик спасён! Смотрите, за мостиком виднеется мельница мини-фермы — Миша точно обрадуется кроликам!»','Міла: «Ура, кораблик врятовано! Дивіться, за містком видніється млин міні-ферми — Міша точно зрадіє кроликам!»','Mila: „Hurá, loďka je zachránená! Pozrite, za mostíkom vidno mlyn minifarmy — Miško sa poteší zajačikom!“'],
+  it:[['boat',615,520,1,-6],['ball',215,575,.95,12],['cap',975,455,.9,-10],['apple',350,490,.85,15],['shades',135,442,.82,-18],['duck',845,565,.78,8]],
+  bg:()=>`${R(0,0,1200,320,'#74c0fc')}${C(1030,90,46,'#ffe66d')}<g class="a-cl">${E(320,90,64,24,'#fff')}${E(760,110,55,22,'#fff')}</g>
+   ${R(0,310,1200,410,'#69db7c')}${E(620,545,410,125,'#4dabf7','#a5d8ff',8)}
+   <g transform="translate(500,495)" class="a-xm">${E(0,0,26,15,'#ffd43b')}${C(18,-14,12,'#ffd43b')}${P('28,-14 38,-10 28,-7','#ff922b')}</g>
+   <g transform="translate(700,565)" class="a-xm">${E(0,0,22,13,'#fff')}${C(-16,-12,10,'#fff')}${P('-24,-12 -33,-9 -24,-6','#ff922b')}</g>
+   <g transform="translate(620,465)"><path d="M-26 30L26 30 18-10 -18-10Z" fill="#ced4da"/>${C(-12,-24,10,'#a5d8ff')}<circle cy="-36" r="12" fill="#e7f5ff" class="a-bb"/>${C(12,-24,10,'#a5d8ff')}</g>
+   ${R(100,220,30,150,'#8d5524')}${C(115,195,72,'#2f9e44')}${R(1050,210,32,160,'#8d5524')}${C(1066,185,78,'#2f9e44')}
+   ${R(80,420,190,26,'#c68b59',5)}${R(80,458,190,22,'#d9a06c',5)}${R(900,420,190,26,'#c68b59',5)}${R(900,458,190,22,'#d9a06c',5)}
+   ${mishaS(290,540,1)}`
+ },
+
+ // 11. MINI-FARM
+ {e:'🐰',t:['11. Уютная мини-ферма','11. Затишна міні-ферма','11. Útulná minifarma'],
+  d:[
+   ['sasha','Заехали на минутку покормить кроликов! Мила, поможешь найти морковку, сыр и фермерские штучки возле амбара?','Заїхали на хвилинку погодувати кроликів! Міло, допоможеш знайти морквинку, сир і фермерські речі біля комори?','Zastavili sme sa na chvíľku nakŕmiť zajačiky! Mila, pomôžeš nájsť mrkvu, syr a farmárske veci pri stodole?'],
+   ['mila','Ого, как здорово крутится мельница! Сейчас всё найду для зверят!','Ого, як чудово крутиться млин! Зараз усе знайду для звірят!','Wau, ako krásne sa točí mlyn! Hneď všetko nájdem pre zvieratká!']
+  ],
+  o:['Папа Саша: «Кролики в восторге! Перед набережной заглянем в книжный магазин — возьмём сказку для Миши и карту к поляне!»','Тато Саша: «Кролики в захваті! Перед набережною зазирнемо в книгарню — візьмемо казку для Міші та карту до галявини!»','Ocko Saša: „Zajačiky sú nadšené! Pred nábrežím zájdeme do kníhkupectva — kúpime rozprávku pre Miška a mapu na lúku!“'],
+  it:[['carrot',385,590,1,-22],['bucket',215,540,.95,4],['cheese',675,525,.9,10],['hat',885,465,.88,-12],['egg',525,632,.8,18],['bell',1015,285,.78,-6]],
+  bg:()=>`${R(0,0,1200,340,'#8ce99a')}${R(0,0,1200,310,'#74c0fc')}${C(160,95,44,'#ffe066')}<g class="a-cl">${E(540,85,60,24,'#fff')}</g>
+   ${R(0,310,1200,410,'#82c91e')}${R(0,470,1200,250,'#a9e34b')}
+   ${R(80,220,310,240,'#e03131',6,'#9c1919',4)}${P('60,225 235,120 410,225','#c92a2a','#7d1414',4)}${R(180,330,110,130,'#7d4f28',4,'#fff',4)}
+   ${P('950,450 1070,450 1045,210 975,210','#f8f9fa','#adb5bd',3)}${P('965,215 1010,165 1055,215','#ff6b6b')}
+   <g transform="translate(1010,220)"><g class="a-sm">${R(-6,-95,12,190,'#d9a06c',3,'#8d5524',2)}${R(-95,-6,190,12,'#d9a06c',3,'#8d5524',2)}${C(0,0,12,'#8d5524')}</g></g>
+   ${Array.from({length:12},(_,i)=>R(i*102+10,420,16,85,'#e9c46a',3,'#b5835a',2)).join('')}${R(0,442,1200,14,'#e9c46a')}${R(0,475,1200,14,'#e9c46a')}
+   ${E(530,610,95,38,'#ffd43b','#e6a700',3)}
+   <g transform="translate(765,575)" class="a-bb">${E(-10,-34,7,18,'#fff','#ccc',2)}${E(10,-34,7,18,'#fff','#ccc',2)}${C(0,-10,18,'#fff','#ccc',2)}${E(0,18,22,18,'#fff','#ccc',2)}${C(-6,-12,2.5,'#222')}${C(6,-12,2.5,'#222')}${C(0,-6,3,'#ff8fab')}</g>
+   ${sashaF(1085,485,1.02)}`
+ },
+
+ // 12. COZY BOOKSHOP
+ {e:'📚',t:['12. Книжный уголок','12. Книгарня чудес','12. Kníhkupectvo'],
+  d:[
+   ['mila','Ух ты, какая волшебная книжная лавка! Здесь и глобус, и спящий котик!','Ого, яка чарівна книжкова крамниця! Тут і глобус, і сонний котик!','Páni, aké čarovné kníhkupectvo! Je tu aj glóbus a spiaca mačička!'],
+   ['liza','Найдём карту-свиток к Праздничной поляне, лупу, компас и звёздочку-закладку!','Знайдемо карту-сувій до Святкової галявини, лупу, компас і зірочку-закладку!','Nájdime mapu na Slávnostnú lúku, lupu, kompas a hviezdičku-záložku!']
+  ],
+  o:['Мила: «Карта у нас! По ней видно, что путь к поляне лежит через солнечную набережную у маяка!»','Міла: «Карта в нас! По ній видно, що шлях до галявини лежить через сонячну набережну біля маяка!»','Mila: „Mapu máme! Ukazuje, že cesta na lúku vedie popri slnečnom móle pri majáku!“'],
+  it:[['scroll',560,515,1,-12],['loupe',340,560,.95,28],['compass',840,535,.9,-15],['candle',185,260,.85,0],['star',1045,215,.78,20],['comb',705,365,.74,42]],
+  bg:()=>`${R(0,0,1200,500,'#5c3d2e')}${R(0,500,1200,220,'#8d5b4c')}
+   ${[45,420,825].map(x=>R(x,85,330,415,'#7f4f24',8,'#4a2c11',4)+[180,280,380].map(y=>R(x+14,y,302,12,'#4a2c11')).join('')).join('')}
+   ${[65,92,118,145,220,250,445,475,510,590,625,850,885,920,985].map((x,i)=>R(x,110+(i%3)*100,22,70,['#ff6b8b','#4ecdc4','#ffd32a','#54a0ff','#9b5de5'][i%5],3)).join('')}
+   <g transform="translate(600,0)"><g class="a-sw">${Ln(0,0,0,70,'#222',4)}${R(-26,70,52,64,'#ffe066',10,'#d35400',4)}<circle cy="102" r="18" fill="#fff3bf" class="a-gl"/></g></g>
+   <g transform="translate(270,368)">${E(0,0,34,18,'#ff9f43','#b5651d',2)}${C(-22,-8,14,'#ff9f43')}${P('-32,-16 -26,-28 -18,-18','#ff9f43')}<g transform="translate(30,0)"><g class="a-sw"><path d="M0 0Q22-18 28-6" fill="none" stroke="#ff9f43" stroke-width="7" stroke-linecap="round"/></g></g></g>
+   ${R(240,515,720,22,'#c68b59',6,'#6e4a2a',3)}${R(280,537,18,130,'#6e4a2a')}${R(900,537,18,130,'#6e4a2a')}
+   ${C(1010,450,44,'#48dbfb','#f7b731',5)}<circle cx="480" cy="240" r="6" fill="#ffe066" class="a-gl"/><circle cx="740" cy="210" r="5" fill="#ffe066" class="a-gl"/>`
+ },
+
+ // 13. LIGHTHOUSE PIER
+ {e:'⛵',t:['13. Набережная у маяка','13. Набережна біля маяка','13. Mólo pri majáku'],
+  d:[
+   ['sasha','Какой морской бриз! Хочу сфотографировать вас на фоне маяка — но куда запропастились фотоаппарат и бинокль?','Який морський бриз! Хочу сфотографувати вас на тлі маяка — але куди поділися фотоапарат і бінокль?','Aký morský vánok! Chcem vás odfotiť pri majáku — ale kam sa podel fotoaparát a ďalekohľad?'],
+   ['mila','И я ещё хочу собрать красивые ракушки и морскую звёздочку на память!','І я ще хочу зібрати красиві мушлі та морську зірочку на згадку!','A ja ešte pozbieram pekné mušle a morskú hviezdicu na pamiatku!']
+  ],
+  o:['Папа Саша: «Отличный снимок! Впереди уже видно колесо обозрения — заглянем на весёлую ярмарку!»','Тато Саша: «Чудовий знімок! Попереду вже видно колесо огляду — зазирнемо на веселий ярмарок!»','Ocko Saša: „Skvelá fotka! Vpredu už vidno ruské koleso — zastavíme sa na veselom jarmoku!“'],
+  it:[['camera',345,515,1,-8],['starfish',650,625,.95,22],['shell',895,585,.9,-15],['anchor',155,585,.92,14],['bino',495,495,.82,6],['boat',1055,465,.78,-10]],
+  bg:()=>`${R(0,0,1200,360,'#74c0fc')}${C(180,95,48,'#ffe066')}<g class="a-cl">${E(480,90,62,24,'#fff')}${E(860,115,54,22,'#fff')}</g>
+   ${R(0,350,1200,370,'#1c7ed6')}${R(0,350,1200,35,'#4dabf7')}
+   <g transform="translate(860,340)" class="a-bb">${P('-45,0 45,0 32,20 -32,20','#e03131')}${P('-4,0 -4,-62 34,-10','#fff')}</g>
+   ${P('980,380 1120,380 1090,150 1010,150','#fff','#495057',3)}${R(1002,215,96,35,'#ff5252')}${R(992,295,116,35,'#ff5252')}${R(1015,105,70,45,'#ffe066',4,'#495057',3)}${P('1000,105 1050,65 1100,105','#ff5252')}
+   <g transform="translate(1050,126)"><g class="a-bm">${P('0,0 -480,-70 -480,85','rgba(255,243,191,.45)')}</g></g>
+   ${R(0,490,1200,230,'#c68b59')}${Array.from({length:12},(_,i)=>Ln(i*105,490,i*105-40,720,'#8d5524',4)).join('')}
+   ${R(80,440,26,95,'#7d4f28',4)}${R(460,440,26,95,'#7d4f28',4)}${R(840,440,26,95,'#7d4f28',4)}
+   ${lizaF(255,445,1.02)}${milaF(405,468,.95)}`
+ },
+
+ // 14. FUNFAIR / CARNIVAL
+ {e:'🎡',t:['14. Весёлая ярмарка','14. Веселий ярмарок','14. Zábavný jarmok'],
+  d:[
+   ['mila','Ура, ярмарка! Если я выиграю в конкурсе «Зоркий глаз», то получу для Миши большого плюшевого мишку!','Ура, ярмарок! Якщо я виграю в конкурсі «Зірке око», то отримаю для Міші великого плюшевого ведмедика!','Hurá, jarmok! Ak vyhrám v súťaži Bystré oko, vyhrám pre Miška veľkého plyšového medvedíka!'],
+   ['misha','Мишку! Ура-ура!','Ведмедика! Ура-ура!','Medvedíka! Hurá-hurá!']
+  ],
+  o:['Мила: «ЕСТЬ! Мы выиграли приз для Миши! А вон и вход на нашу Праздничную поляну — последняя, самая волшебная остановка!»','Міла: «Є! Ми виграли приз для Міші! А он і вхід на нашу Святкову галявину — остання, найчарівніша зупинка!»','Mila: „MÁME TO! Vyhrali sme cenu pre Miška! A tam je už vstup na Slávnostnú lúku — posledná, najčarovnejšia zastávka!“'],
+  it:[['popcorn',220,560,1,-8],['lollipop',740,465,.95,18],['teddy',990,460,.92,-12],['ticket',490,615,.85,15],['drum',345,455,.85,-6],['star',625,215,.76,22]],
+  bg:()=>`${R(0,0,1200,450,'#3b2d6f')}${R(0,450,1200,270,'#4f4382')}
+   ${C(180,80,3,'#fff')}${C(440,65,3,'#ffe066')}${C(890,95,3,'#fff')}
+   <g transform="translate(880,255)">${Ln(0,0,-85,220,'#ced6e0',10)}${Ln(0,0,85,220,'#ced6e0',10)}<g class="a-ss">${C(0,0,150,'none','#ff6b8b',9)}${C(0,0,90,'none','#ffd32a',5)}${[0,45,90,135,180,225,270,315].map(a=>`<g transform="rotate(${a})">${Ln(0,0,0,-150,'#fff',3)}${R(-14,-166,28,22,['#48dbfb','#ff9f43','#2ed573','#ff6b8b'][a/45%4],5)}</g>`).join('')}</g></g>
+   ${P('70,480 250,210 430,480','#ff5252','#b32424',4)}${P('150,480 250,210 350,480','#fff')}${P('210,480 250,210 290,480','#ff5252')}
+   ${R(460,340,340,185,'#48dbfb',10,'#0984e3',4)}${R(445,320,370,38,'#ffd32a',8,'#e5a900',3)}${R(485,375,290,110,'#2c2246',6)}
+   ${Array.from({length:12},(_,i)=>`<circle cx="${100+i*90}" cy="${135+(i%2)*14}" r="9" fill="${['#ffd32a','#ff6b8b','#48dbfb','#2ed573'][i%4]}" class="a-gl"/>`).join('')}
+   ${R(870,445,250,120,'#ff9f43',10,'#c46b14',4)}`
+ },
+
+ // 15. CELEBRATION MEADOW FINALE!
+ {e:'🎉',t:['15. Праздничная поляна','15. Святкова галявина','15. Slávnostná lúka'],
+  d:[
+   ['liza','Мы на месте! Как красиво горят огоньки на нашей Праздничной поляне!','Ми на місці! Як гарно горять вогники на нашій Святковій галявині!','Sme tu! Ako krásne svietia svetielka na našej Slávnostnej lúke!'],
+   ['sasha','Мила, осталось разыскать последние 6 праздничных вещиц — и можно начинать наш лучший семейный вечер!','Міло, залишилося відшукати останні 6 святкових речей — і можна починати наш найкращий сімейний вечір!','Mila, zostáva nájsť posledných 6 slávnostných vecí — a môžeme začať náš najlepší rodinný večer!'],
+   ['mila','Это было самое классное приключение на свете! Поехали — финальный поиск!','Це була найкласніша пригода у світі! Поїхали — фінальний пошук!','Bolo to najúžasnejšie dobrodružstvo na svete! Poďme — finálne hľadanie!']
+  ],
+  o:['Вся семья вместе: «УРА! Спасибо, Мила — ты настоящий мастер поиска! Лучший Семейный день удался на славу!»','Уся родина разом: «УРА! Дякуємо, Міло — ти справжній майстер пошуку! Найкращий Сімейний день удався на славу!»','Celá rodina spolu: „HURÁ! Ďakujeme, Mila — si skutočná majsterka hľadania! Najlepší Rodinný deň sa vydaril na výbornú!“'],
+  it:[['basket',450,595,1,-6],['gift',765,575,.95,8],['lantern',175,415,.92,-8],['cupcake',605,565,.88,4],['camera',990,545,.85,-14],['photo',295,525,.8,12]],
+  bg:()=>`<defs><linearGradient id="sun15" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4834d4"/><stop offset="55%" stop-color="#ff7979"/><stop offset="100%" stop-color="#f6e58d"/></linearGradient></defs>
+   ${R(0,0,1200,410,'url(#sun15)')}${C(600,365,92,'#ffeaa7')}
+   ${R(0,395,1200,325,'#2ecc71')}<path d="M0 440Q350 380 700 445T1200 420V720H0Z" fill="#27ae60"/>
+   ${R(75,180,38,240,'#6f4e37')}${C(95,155,88,'#1e8449')}${R(1085,180,38,240,'#6f4e37')}${C(1105,155,88,'#1e8449')}
+   <path d="M100 220Q600 315 1100 220" fill="none" stroke="#2c2246" stroke-width="3"/>
+   ${Array.from({length:13},(_,i)=>`<circle cx="${160+i*74}" cy="${242+Math.sin(i/12*Math.PI)*52}" r="9" fill="${['#ffe066','#ff6b8b','#48dbfb','#7bed9f'][i%4]}" class="a-gl"/>`).join('')}
+   ${P('280,520 920,520 980,665 220,665','#ff7675','#fff',5)}${P('350,545 850,545 895,640 305,640','#ffeaa7')}
+   <g class="a-fl">${C(340,330,5,'#fff200')}${C(520,290,4,'#fff200')}${C(790,325,5,'#fff200')}${C(930,360,4,'#fff200')}</g>
+   ${sashaF(455,445,1.02)}${lizaF(565,448,1.02)}${milaF(668,468,.95)}${mishaS(755,515,1)}`
+ }
+];
+
+// === 6. WEB AUDIO SYNTH (CATCHY LOOPING MELODY + SFX) ===
+let AC=null, muted=false, bgmTimer=null, noteIdx=0;
+const MEL=[523.25,659.25,783.99,659.25,880,783.99,659.25,587.33,523.25,587.33,659.25,783.99,698.46,659.25,587.33,523.25];
+const BAS=[130.81,130.81,196,196,220,220,174.61,196];
+function initAudio(){
+ if(!AC){const Ctx=window.AudioContext||window.webkitAudioContext;if(Ctx)AC=new Ctx();}
+ if(AC&&AC.state==='suspended')AC.resume();
+ if(!bgmTimer)bgmTimer=setInterval(playBeat,310);
+}
+function tone(freq,dur,type='triangle',vol=0.055,delay=0){
+ if(muted||!AC)return;
+ const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+ o.type=type;o.frequency.setValueAtTime(freq,t);
+ g.gain.setValueAtTime(0.001,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.0008,t+dur);
+ o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+dur+0.02);
+}
+function playBeat(){
+ if(muted||!AC)return;
+ tone(MEL[noteIdx%MEL.length],0.26,'triangle',0.042);
+ if(noteIdx%2===0)tone(BAS[(noteIdx>>1)%BAS.length],0.45,'sine',0.045);
+ noteIdx++;
+}
+function sfxFound(){initAudio();tone(587.33,.14,'sine',.11,0);tone(783.99,.14,'sine',.11,.08);tone(1046.5,.28,'triangle',.13,.16);}
+function sfxWrong(){initAudio();tone(190,.13,'sawtooth',.06,0);tone(150,.15,'sawtooth',.05,.07);}
+function sfxHint(){initAudio();[659,784,988,1318].forEach((f,i)=>tone(f,.22,'sine',.09,i*.07));}
+function sfxWin(){initAudio();[523,659,784,1046,784,1046].forEach((f,i)=>tone(f,.26,'triangle',.12,i*.11));}
+function toggleAudio(){
+ muted=!muted;const ic=muted?'🔇':'🔊';
+ document.getElementById('b-snd').textContent=ic;document.getElementById('u-msnd').textContent=ic;
+ if(!muted)initAudio();
+}
+
+// === 7. GAME STATE & ENGINE ===
+let SAVE=JSON.parse(localStorage.getItem('mila_save')||'{"u":1,"st":{},"tm":{}}');
+let CUR=0, FOUND=new Set(), HINTS=3, SEC=0, TMR=null, PLAY=false;
+let DLG=[], DI=0, CLICKS=[];
+let Z=1, PX=0, PY=0;
+const li=()=>L==='ru'?0:L==='uk'?1:2;
+const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+function save(){localStorage.setItem('mila_save',JSON.stringify(SAVE));}
+let tOut=null;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(tOut);tOut=setTimeout(()=>el.classList.remove('show'),2100);}
+
+function setLang(l){
+ L=l;localStorage.setItem('mila_l',l);
+ document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.l===l));
+ refreshUI();
+}
+function cycleLang(){const arr=['ru','uk','sk'];setLang(arr[(arr.indexOf(L)+1)%3]);}
+function refreshUI(){
+ const u=U[L];
+ document.getElementById('u-title').textContent=u.t;
+ document.getElementById('u-sub').textContent=u.s;
+ document.getElementById('u-play').textContent=u.p;
+ document.getElementById('u-mapt').textContent=u.mt;
+ document.getElementById('u-bmap').textContent=u.bm;
+ document.getElementById('u-unlk').textContent=u.ul;
+ document.getElementById('u-lc').textContent=L.toUpperCase();
+ document.getElementById('w-mp').textContent='🗺️ '+u.bm;
+ document.getElementById('w-rp').textContent=u.rp;
+ if(document.getElementById('map-screen').classList.contains('active'))renderMap();
+ if(document.getElementById('game-screen').classList.contains('active')){
+  document.getElementById('h-title').textContent=SC[CUR].t[li()];
+  renderTray();
+  if(document.getElementById('d-mod').classList.contains('active'))showDlg();
+ }
+}
+function goMap(){initAudio();openMap();}
+function openMap(){
+ clearInterval(TMR);PLAY=false;
+ document.getElementById('title-screen').classList.remove('active');
+ document.getElementById('game-screen').classList.remove('active');
+ document.getElementById('w-mod').classList.remove('active');
+ document.getElementById('d-mod').classList.remove('active');
+ document.getElementById('map-screen').classList.add('active');
+ renderMap();
+}
+function unlockAll(){initAudio();SAVE.u=15;save();renderMap();toast(U[L].ult);}
+function renderMap(){
+ const g=document.getElementById('map-grid'), u=U[L];
+ let tot=0; Object.values(SAVE.st).forEach(v=>tot+=v);
+ document.getElementById('u-stars').textContent=`⭐ ${tot}/45`;
+ g.innerHTML=SC.map((s,i)=>{
+  const lk=i>=SAVE.u, st=SAVE.st[i]||0, tm=SAVE.tm[i];
+  return`<div class="loc-card ${lk?'locked':''} ${st?'done':''}" onclick="${lk?`toast('${u.lk}')`:`loadScene(${i})`}">
+   <div style="display:flex;justify-content:space-between;align-items:center"><span class="loc-num">${i+1}</span><span style="font-size:22px">${lk?'🔒':s.e}</span></div>
+   <div style="font-weight:800;font-size:13.5px;line-height:1.25">${s.t[li()].replace(/^\d+\.\s*/,'')}</div>
+   <div style="display:flex;justify-content:space-between;font-size:12px;color:#6d618f;font-weight:700;margin-top:auto">
+    <span>${'⭐'.repeat(st)}${'☆'.repeat(3-st)}</span><span>${tm!=null?fmt(tm):'--:--'}</span>
+   </div></div>`;
+ }).join('');
+}
+
+function loadScene(idx){
+ initAudio(); CUR=idx; FOUND=new Set(); HINTS=3; SEC=0; PLAY=false; clearInterval(TMR); resetV();
+ document.getElementById('map-screen').classList.remove('active');
+ document.getElementById('w-mod').classList.remove('active');
+ document.getElementById('game-screen').classList.add('active');
+ const sc=SC[CUR];
+ document.getElementById('h-title').textContent=sc.t[li()];
+ document.getElementById('h-time').textContent='00:00';
+ document.getElementById('h-fnd').textContent=`0/${sc.it.length}`;
+ document.getElementById('h-hnt').textContent=HINTS;
+ document.getElementById('b-hint').disabled=false;
+ const itemsSVG=sc.it.map((a,i)=>{
+  const [id,x,y,s,rot]=a;
+  return`<g class="h-item" id="hi-${i}" data-i="${i}" transform="translate(${x},${y}) rotate(${rot}) scale(${s})">${C(0,0,26,'transparent')}${IT[id][3]}</g>`;
+ }).join('');
+ document.getElementById('svg').innerHTML=`<g id="bg-l">${sc.bg()}</g><g id="it-l">${itemsSVG}</g><g id="fx-l" pointer-events="none"></g>`;
+ renderTray();
+ DLG=sc.d; DI=0; document.getElementById('d-mod').classList.add('active'); showDlg();
+}
+function renderTray(){
+ const sc=SC[CUR];
+ document.getElementById('tray').innerHTML=sc.it.map((a,i)=>{
+  const id=a[0], f=FOUND.has(i);
+  return`<div class="chip ${f?'found':''}"><svg class="c-ico" viewBox="-22 -22 44 44">${IT[id][3]}</svg><span>${IT[id][li()]}</span></div>`;
+ }).join('');
+}
+function showDlg(){
+ const row=DLG[DI], u=U[L];
+ document.getElementById('d-av').innerHTML=port(row[0]);
+ document.getElementById('d-spk').textContent=u.sp[row[0]];
+ document.getElementById('d-txt').textContent=row[li()+1];
+ document.getElementById('d-dot').textContent=`${DI+1} / ${DLG.length}`;
+ document.getElementById('d-nxt').textContent=DI===DLG.length-1?u.go:u.nx;
+}
+function nextDlg(){
+ initAudio(); tone(660,.08,'sine',.07);
+ if(DI<DLG.length-1){DI++;showDlg();}
+ else{document.getElementById('d-mod').classList.remove('active');startTimer();}
+}
+function startTimer(){
+ PLAY=true; clearInterval(TMR);
+ TMR=setInterval(()=>{if(PLAY){SEC++;document.getElementById('h-time').textContent=fmt(SEC);}},1000);
+}
+
+function findItem(i){
+ if(!PLAY||FOUND.has(i))return;
+ FOUND.add(i); sfxFound();
+ const el=document.getElementById('hi-'+i); if(el)el.classList.add('found');
+ const [id,x,y]=SC[CUR].it[i];
+ spawnBurst(x,y);
+ toast(`${U[L].fd} ${IT[id][li()]} ✨`);
+ document.getElementById('h-fnd').textContent=`${FOUND.size}/${SC[CUR].it.length}`;
+ renderTray();
+ if(FOUND.size===SC[CUR].it.length)setTimeout(winScene,600);
+}
+function spawnBurst(x,y){
+ const fx=document.getElementById('fx-l');
+ const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+ g.setAttribute('transform',`translate(${x},${y})`);
+ g.innerHTML=`<circle r="34" fill="none" stroke="#ffe066" stroke-width="5" class="hring"/>${[0,60,120,180,240,300].map(a=>`<circle cx="${Math.cos(a*Math.PI/180)*28}" cy="${Math.sin(a*Math.PI/180)*28}" r="5" fill="#fff3b0"/>`).join('')}`;
+ fx.appendChild(g); setTimeout(()=>g.remove(),900);
+}
+function spawnWrong(x,y){
+ const fx=document.getElementById('fx-l');
+ const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+ g.setAttribute('transform',`translate(${x},${y})`);
+ g.innerHTML=`<circle r="18" fill="none" stroke="#ff6b8b" stroke-width="4" class="hring"/>`;
+ fx.appendChild(g); setTimeout(()=>g.remove(),700);
+}
+
+function useHint(){
+ if(!PLAY)return;
+ if(HINTS<=0){toast(U[L].nh);return;}
+ const rem=SC[CUR].it.map((_,i)=>i).filter(i=>!FOUND.has(i));
+ if(!rem.length)return;
+ HINTS--; document.getElementById('h-hnt').textContent=HINTS;
+ if(HINTS<=0)document.getElementById('b-hint').disabled=true;
+ const pick=rem[Math.floor(Math.random()*rem.length)];
+ const [,x,y]=SC[CUR].it[pick];
+ sfxHint(); toast(U[L].hu);
+ const fx=document.getElementById('fx-l');
+ const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+ g.setAttribute('transform',`translate(${x},${y})`);
+ g.innerHTML=`<circle r="44" fill="rgba(255,224,102,.25)" stroke="#ffd32a" stroke-width="5" class="hring"/><circle r="28" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 5" class="a-sm"/>`;
+ fx.appendChild(g); setTimeout(()=>g.remove(),4000);
+}
+
+function winScene(){
+ PLAY=false; clearInterval(TMR); sfxWin();
+ const used=3-HINTS, stars=(SEC<=55&&used===0)?3:(SEC<=110&&used<=1)?2:1;
+ SAVE.st[CUR]=Math.max(SAVE.st[CUR]||0,stars);
+ SAVE.tm[CUR]=SAVE.tm[CUR]==null?SEC:Math.min(SAVE.tm[CUR],SEC);
+ if(CUR+1>=SAVE.u&&CUR+1<SC.length)SAVE.u=CUR+2;
+ save();
+ const u=U[L], isEnd=CUR===SC.length-1;
+ document.getElementById('w-ports').innerHTML=isEnd?['sasha','liza','mila','misha'].map(p=>`<div class="p-badge">${port(p)}</div>`).join(''):`<div class="p-badge main">${port('mila')}</div>`;
+ document.getElementById('w-head').textContent=isEnd?u.fh:u.wh;
+ document.getElementById('w-st').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+ document.getElementById('w-out').textContent=SC[CUR].o[li()];
+ document.getElementById('w-tm').textContent=`⏱️ ${u.tl}: ${fmt(SEC)}`;
+ document.getElementById('w-hn').textContent=`💡 ${u.hl}: ${used}/3`;
+ document.getElementById('w-nx').textContent=isEnd?u.fn:u.nl;
+ document.getElementById('w-mod').classList.add('active');
+}
+function nextSc(){if(CUR<SC.length-1)loadScene(CUR+1);else openMap();}
+
+// === 8. ZOOM, PAN & TOUCH/CLICK HANDLER ===
+function applyV(){
+ const maxX=(Z-1)*420, maxY=(Z-1)*260;
+ PX=Math.max(-maxX,Math.min(maxX,PX)); PY=Math.max(-maxY,Math.min(maxY,PY));
+ document.getElementById('vp').style.transform=`translate(${PX}px,${PY}px) scale(${Z})`;
+}
+function zStep(d){Z=Math.max(1,Math.min(2.6,Z+d));applyV();}
+function resetV(){Z=1;PX=0;PY=0;applyV();}
+
+const stg=document.getElementById('stage'), svgEl=document.getElementById('svg');
+let drag=false, moved=0, sx=0, sy=0, px0=0, py0=0, pinch0=0, z0=1;
+stg.addEventListener('wheel',e=>{e.preventDefault();zStep(e.deltaY<0?.22:-.22);},{passive:false});
+stg.addEventListener('pointerdown',e=>{
+ if(!PLAY)return;
+ drag=true;moved=0;sx=e.clientX;sy=e.clientY;px0=PX;py0=PY;
+});
+window.addEventListener('pointermove',e=>{
+ if(!drag)return;
+ const dx=e.clientX-sx, dy=e.clientY-sy;
+ moved=Math.hypot(dx,dy);
+ if(Z>1&&moved>4){PX=px0+dx;PY=py0+dy;applyV();}
+});
+window.addEventListener('pointerup',e=>{
+ if(!drag)return; drag=false;
+ if(moved<10&&PLAY){
+  const hi=e.target.closest&&e.target.closest('.h-item');
+  if(hi){findItem(Number(hi.dataset.i));return;}
+  if(e.target.closest&&e.target.closest('#svg')){
+   sfxWrong();
+   const pt=svgEl.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+   const loc=pt.matrixTransform(svgEl.getScreenCTM().inverse());
+   spawnWrong(loc.x,loc.y);
+   const now=Date.now();CLICKS=CLICKS.filter(t=>now-t<2000);CLICKS.push(now);
+   if(CLICKS.length>=4)toast(U[L].sl);
+  }
+ }
+});
+stg.addEventListener('touchstart',e=>{if(e.touches.length===2){drag=false;pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);z0=Z;}},{passive:true});
+stg.addEventListener('touchmove',e=>{if(e.touches.length===2){e.preventDefault();const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);Z=Math.max(1,Math.min(2.6,z0*(d/pinch0)));applyV();}},{passive:false});
+
+// INIT
+document.getElementById('t-ports').innerHTML=`<div class="p-badge">${port('sasha')}</div><div class="p-badge">${port('liza')}</div><div class="p-badge main">${port('mila')}</div><div class="p-badge">${port('misha')}</div>`;
+setLang(L);
+</script>
+</body>
+</html>
